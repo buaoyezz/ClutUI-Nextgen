@@ -1,6 +1,4 @@
 # ClutUI-Nextgen
-
-# ClutUI-Nextgen 🎉
 ![LOGO](./preview/logo.png)
 ![界面预览](./preview/preview.png)  
 
