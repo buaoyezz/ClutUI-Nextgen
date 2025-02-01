@@ -1,0 +1,7 @@
+{
+    "startup": false,
+    "clean_path": "",
+    "auto_clean": false,
+    "log_level": "ERROR",
+    "log_days": 0
+}
