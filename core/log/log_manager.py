@@ -10,48 +10,62 @@ from colorama import Fore, Style
 class ColoredFormatter(logging.Formatter):
     
     COLORS = {
-        'DEBUG': Fore.CYAN,
-        'INFO': Fore.GREEN,
-        'WARNING': Fore.YELLOW,
-        'ERROR': Fore.RED,
-        'CRITICAL': Fore.RED + Style.BRIGHT,
+        'DEBUG': '',  # 软件内不使用颜色
+        'INFO': '',
+        'WARNING': '',
+        'ERROR': '',
+        'CRITICAL': '',
     }
     
-    def __init__(self, fmt: str, datefmt: Optional[str] = None):
+    def __init__(self, fmt: str, datefmt: Optional[str] = None, use_colors: bool = True):
+        # 修改格式化字符串，使用固定宽度
+        fmt = ('[%(asctime)s] │ %(levelname)-8s │ %(pathname)-25s:%(lineno)-4d │ %(message)s')
         super().__init__(fmt, datefmt)
-        colorama.init()
+        self.use_colors = use_colors
+        if use_colors:
+            colorama.init()
+            self.COLORS = {
+                'DEBUG': Fore.CYAN,
+                'INFO': Fore.GREEN,
+                'WARNING': Fore.YELLOW,
+                'ERROR': Fore.RED,
+                'CRITICAL': Fore.RED + Style.BRIGHT,
+            }
     
     def format(self, record: logging.LogRecord) -> str:
         # 保存原始的属性
         original_levelname = record.levelname
         original_pathname = record.pathname
-        original_lineno = record.lineno
         
         # 获取实际的调用文件信息
         if hasattr(record, 'pathname'):
-            # 获取调用栈信息来确定真实的调用位置
             import inspect
             frame = inspect.currentframe()
-            # 向上查找直到找到非日志模块的调用者
+            caller_frame = None
+            
             while frame:
                 module_name = frame.f_globals.get('__name__', '')
-                if not module_name.startswith('logging') and 'log_manager' not in module_name:
-                    filename = os.path.basename(frame.f_code.co_filename)
-                    lineno = frame.f_lineno
-                    record.pathname = filename
-                    record.lineno = lineno
+                if (not module_name.startswith('logging') and 
+                    not module_name.startswith('core.log')):
+                    caller_frame = frame
                     break
                 frame = frame.f_back
             
-        # 为不同级别添加颜色
-        if record.levelname in self.COLORS:
-            record.levelname = (f"{self.COLORS[record.levelname]}"
-                              f"{record.levelname:^8}"
-                              f"{Style.RESET_ALL}")
+            if caller_frame:
+                filename = os.path.basename(caller_frame.f_code.co_filename)
+                # 确保文件名不超过25个字符，如果超过则截断
+                if len(filename) > 25:
+                    filename = filename[:22] + "..."
+                record.pathname = filename
+                record.lineno = caller_frame.f_lineno
         
-        # 为文件路径和行号添加颜色
-        record.pathname = f"{Fore.BLUE}{record.pathname}{Style.RESET_ALL}"
-        record.lineno = str(record.lineno)
+        # 根据是否使用颜色来格式化
+        if self.use_colors:
+            if record.levelname in self.COLORS:
+                record.levelname = (f"{self.COLORS[record.levelname]}"
+                                  f"{record.levelname}"
+                                  f"{Style.RESET_ALL}")
+            record.pathname = f"{Fore.BLUE}{record.pathname}{Style.RESET_ALL}"
         
         # 格式化消息
         result = super().format(record)
@@ -59,13 +73,13 @@ class ColoredFormatter(logging.Formatter):
         # 恢复原始属性
         record.levelname = original_levelname
         record.pathname = original_pathname
-        record.lineno = original_lineno
         
         return result
 
 class LogManager:
     _instance = None
     _initialized = False
+    _active_filters = set()
     
     def __new__(cls):
         if cls._instance is None:
@@ -94,15 +108,17 @@ class LogManager:
         if self.logger.handlers:
             self.logger.handlers.clear()
         
-        # 创建格式化器
-        file_formatter = logging.Formatter(
-            '[%(asctime)s] %(levelname)-8s [%(filename)s:%(lineno)s] - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        
+        # 创建两种格式化器
         console_formatter = ColoredFormatter(
             '[%(asctime)s] │ %(levelname)s │ %(pathname)s:%(lineno)s │ %(message)s',  
-            datefmt='%H:%M:%S'  # 只显示时间，不显示日期
+            datefmt='%H:%M:%S',
+            use_colors=True  # 控制台使用颜色
+        )
+        
+        file_formatter = ColoredFormatter(
+            '[%(asctime)s] │ %(levelname)s │ %(pathname)s:%(lineno)s │ %(message)s',  
+            datefmt='%H:%M:%S',
+            use_colors=False  # 文件不使用颜色
         )
         
         # 创建文件处理器
@@ -123,6 +139,24 @@ class LogManager:
         # 添加处理器
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
+        
+        # 修改过滤器实现
+        class LevelFilter(logging.Filter):
+            def __init__(self, log_manager):
+                super().__init__()
+                self.log_manager = log_manager
+
+            def filter(self, record):
+                # 检查是否应该显示此记录
+                if not self.log_manager._active_filters:
+                    return True  # 没有过滤器时显示所有日志
+                
+                return record.levelname in self.log_manager._active_filters
+
+        # 为每个处理器添加过滤器
+        self.level_filter = LevelFilter(self)
+        for handler in self.logger.handlers:
+            handler.addFilter(self.level_filter)
         
         # 启动信息
         self.info("="*50)
@@ -150,6 +184,24 @@ class LogManager:
     
     def get_logger(self) -> logging.Logger:
         return self.logger
+    
+    def set_level_filter(self, level: str) -> None:
+        """设置日志等级过滤器
+        
+        Args:
+            level: 日志等级 ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'ALL')
+        """
+        # 清除之前的过滤器
+        self._active_filters.clear()
+        
+        # 如果不是 ALL，则设置新的过滤级别
+        if level != 'ALL':
+            self._active_filters.add(level)
+            
+        # 强制更新处理器的过滤器
+        for handler in self.logger.handlers:
+            handler.removeFilter(self.level_filter)
+            handler.addFilter(self.level_filter)
 
 # 全局访问点
 log = LogManager()

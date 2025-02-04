@@ -1,0 +1,193 @@
+Google Material Design Icons under Apache License 2.0
+https://www.apache.org/licenses/LICENSE-2.0
+
+The Material Icons font is copyrighted by Google.
+Licensed under Apache 2.0.
+Copyright 2023 Google LLC. All rights reserved.
+
+PySide6 (Qt for Python) under LGPL-3.0 License, allows commercial use
+https://www.qt.io/licensing/
+
+This Project (ClutUI Nextgen) under MIT License
+Copyright (c) 2023-2025 ClutUI Nextgen Team
+
+Hereby, to any person obtaining a copy of this software and associated documentation files, a permission to deal in the Software without restriction, including but not limited to the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, is granted.
+
+The Software is provided "as is", without warranty of any kind, either express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the Software.
+
+Third-Party Components and Licenses:
+
+1. Material Design Icons
+Licensed under Apache License 2.0
+Copyright (c) Google LLC
+Full license text can be found at: https://www.apache.org/licenses/LICENSE-2.0
+
+Terms of use:
+- Icons may be used in both commercial and non-commercial projects
+- Attribution required when using the icons
+- The license copy must be included in the distribution
+- Any modifications must be clearly marked
+- Significant changes to the icons must be noted
+
+2. PySide6 (Qt for Python)
+Licensed under LGPL v3
+Copyright (c) The Qt Company Ltd.
+Full license text can be found at: https://www.qt.io/licensing/
+
+Terms of use:
+- Commercial use is allowed under certain conditions
+- Modifications must be available under LGPL
+- Dynamic linking is allowed
+- Static linking requires a commercial license
+- The source code must be made available to users
+- Changes to LGPL components must be shared
+
+3. Other Components
+All other components and libraries used in this project are:
+- MIT License
+
+Usage Guidelines:
+
+1. Commercial Use
+- Commercial use is allowed for all components under their respective licenses
+- PySide6 has some restrictions for commercial use
+- Please contact the respective license holders if necessary for clarification
+
+2. Distribution
+- Include all license texts when distributing
+- Retain copyright notices
+- Record any modifications made
+- Provide access to the source code if required
+
+3. Modification
+- Clearly indicate any modifications made
+- Follow each component's license requirements
+- Retain original copyright notices
+
+4. Attribution Requirements
+- Include the original copyright notice
+- Retain the license texts
+- Acknowledge the original authors
+- Document any changes made
+
+5. Disclaimers and Warranties
+- No warranties are provided
+- Use at your own risk
+- Authors are not responsible for any damages
+- Refer to individual licenses for specific terms
+
+Contact Information:
+
+For any questions regarding licensing or usage:
+- License inquiries: zzbuaoye@gmail.com
+
+To report license violations:
+If you believe any content infringes on your rights, please contact us immediately:
+zzbuaoye@gmail.com
+We will cooperate fully to remove any infringing content! Protecting your intellectual property is our priority!
+
+Last updated: 2025-02-04
+Version: 1.0.0
+
+Note:
+This notice may change. Please check for updates regularly.
+
+---
+
+Google Material Design 图标在 Apache License 2.0 许可下使用
+https://www.apache.org/licenses/LICENSE-2.0
+
+Material Icons 字体版权归 Google 所有，基于 Apache 2.0 许可
+版权所有 2023 Google LLC。保留所有权利。
+
+PySide6 (Qt for Python) 基于 LGPL-3.0 许可，允许商业使用
+https://www.qt.io/licensing/
+
+本项目 (ClutUI Nextgen) 基于 MIT 许可
+版权所有 (c) 2023-2025 ClutUI Nextgen 团队
+
+特此免费授予任何获得本软件及相关文档文件副本的人无限制地处理本软件的权利，
+包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或销售本软件的权利。
+
+本软件按"原样"提供，不提供任何形式的明示或暗示的保证，包括但不限于对适销性、
+特定用途的适用性和非侵权性的保证。在任何情况下，作者或版权持有人均不对任何索赔、
+损害或其他责任负责，无论是在合同诉讼、侵权行为或其他方面，由软件或软件的使用或
+其他交易引起、产生或与之相关。
+
+第三方组件及许可：
+
+1. Material Design 图标
+基于 Apache License 2.0 许可
+版权所有 (c) Google LLC
+完整许可文本请见：https://www.apache.org/licenses/LICENSE-2.0
+
+使用条款：
+- 可在商业和非商业项目中使用图标
+- 使用图标时需要注明来源
+- 必须在分发中包含许可证副本
+- 必须清楚标明修改之处
+- 必须说明对图标进行的重大更改
+
+2. PySide6 (Qt for Python)
+基于 LGPL v3 许可
+版权所有 (c) The Qt Company Ltd.
+完整许可文本请见：https://www.qt.io/licensing/
+
+使用条款：
+- 在特定条件下允许商业使用
+- 修改必须在 LGPL 下可用
+- 允许动态链接
+- 静态链接需要商业许可
+- 必须向用户提供源代码
+- 必须共享对 LGPL 组件的更改
+
+3. 其他组件
+本项目使用的所有其他组件和库均为：
+- MIT 许可
+
+使用指南：
+
+1. 商业使用
+- 在各自许可证下允许所有组件的商业使用
+- PySide6 商业使用有部分限制
+- 需要时请联系相应的许可证持有者以获取说明
+
+2. 分发
+- 分发时包含所有许可证文本
+- 保留版权声明
+- 记录任何修改
+- 按要求提供源代码访问
+
+3. 修改
+- 清楚标明任何修改
+- 遵循每个组件的许可要求
+- 保留原始版权声明
+
+4. 署名要求
+- 包含原始版权声明
+- 保留许可证文本
+- 确认原作者
+- 记录更改
+
+5. 责任和保证
+- 不提供保证
+- 使用风险自负
+- 作者不对损害负责
+- 查看个别许可证的具体条款
+
+联系信息：
+
+如有任何关于许可或使用的问题：
+- 相关问题咨询：zzbuaoye@gmail.com
+
+报告许可违规：
+如果您认为任何内容侵犯了您的权利，请立即联系我们：
+zzbuaoye@gmail.com
+我将全力配合处理，删除全部侵权内容！守护您的知识产权！
+
+最后更新：2025-02-04
+版本：1.0.0
+
+注：
+本声明可能会更改。请定期查看更新
+上述英文版可能存在部分翻译问题，请以中文版为准

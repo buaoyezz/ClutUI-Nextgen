@@ -1,10 +1,12 @@
-from PySide6.QtWidgets import QStackedWidget, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QStackedWidget, QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QLabel
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QFontDatabase
 from pages.quick_start import QuickStartPage
 from pages.about_page import AboutPage
 from pages.log_page import LogPage
 from core.animations.animation_manager import AnimationManager
 from core.log.log_manager import log
+from core.font.font_manager import FontManager
 
 class PagesManager:
     def __init__(self):
@@ -17,6 +19,9 @@ class PagesManager:
         # 创建动画管理器
         self.animation_manager = AnimationManager()
         
+        # 创建字体管理器
+        self.font_manager = FontManager()
+        
         # 创建页面实例
         self.quick_start_page = QuickStartPage()
         self.about_page = AboutPage()
@@ -26,6 +31,13 @@ class PagesManager:
         self.sidebar_layout = QVBoxLayout(self.sidebar)
         self.sidebar_layout.setContentsMargins(10, 10, 10, 10)
         self.sidebar_layout.setSpacing(2)
+        
+        # 使用字体管理器获取图标映射
+        self.icons = {
+            "快速开始": self.font_manager.get_icon_text('dashboard'),
+            "日志": self.font_manager.get_icon_text('article'),
+            "关于": self.font_manager.get_icon_text('info')
+        }
         
         # 创建并存储按钮
         self.buttons = {
@@ -59,28 +71,67 @@ class PagesManager:
         log.info("初始化页面管理器")
     
     def create_sidebar_button(self, text):
-        btn = QPushButton(text)
+        btn = QPushButton()  # 创建空按钮
+        
+        # 创建水平布局
+        layout = QHBoxLayout()
+        layout.setContentsMargins(20, 0, 0, 0)
+        layout.setSpacing(10)
+        
+        # 添加图标
+        if text in self.icons:
+            icon_label = QLabel(self.icons[text])
+            self.font_manager.apply_icon_font(icon_label, size=20)
+            icon_label.setStyleSheet("""
+                QLabel {
+                    color: #666666;
+                    min-width: 24px;
+                    max-width: 24px;
+                }
+            """)
+            layout.addWidget(icon_label)
+        
+        # 添加文本
+        text_label = QLabel(text)
+        self.font_manager.apply_font(text_label)
+        text_label.setStyleSheet("""
+            QLabel {
+                color: #333333;
+                font-size: 14px;
+            }
+        """)
+        layout.addWidget(text_label)
+        
+        # 创建容器并设置布局
+        container = QWidget()
+        container.setLayout(layout)
+        
+        # 设置按钮样式和属性
         btn.setFixedHeight(40)
-        btn.setFixedWidth(150)  # 设置固定宽度
+        btn.setFixedWidth(150)
         btn.setCheckable(True)
         btn.clicked.connect(lambda: self.switch_page(text))
+        
+        # 设置布局
+        btn.setLayout(layout)
+        
+        # 修改样式表以适应图标
         btn.setStyleSheet("""
             QPushButton {
                 border: none;
                 text-align: left;
-                padding-left: 20px;
-                color: #333333;
+                padding: 0;
                 background: transparent;
-                font-size: 14px;
-                min-width: 150px;  /* 设置最小宽度 */
-                max-width: 150px;  /* 设置最大宽度 */
+                border-radius: 4px;
             }
             QPushButton:hover {
-                background-color: rgba(245, 245, 245, 0.8);
+                background-color: rgba(33, 150, 243, 0.1);
             }
             QPushButton:checked {
-                background-color: rgba(245, 245, 245, 0.8);
+                background-color: rgba(33, 150, 243, 0.15);
                 border-left: 3px solid #2196F3;
+            }
+            QPushButton:checked QLabel {
                 color: #2196F3;
             }
         """)

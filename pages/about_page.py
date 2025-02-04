@@ -68,7 +68,7 @@ class AboutPage(QWidget):
         github_btn = Button(text="GitHub", style="blue")
         github_btn.setFixedSize(150, 40)
         github_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://github.com/ZZBuaaYe/ClutUI-Nextgen")))
+            QUrl("https://github.com/buaoyezz/ClutUI-Nextgen")))
         buttons_layout.addWidget(github_btn)
         
         # 添加通知按钮
@@ -82,39 +82,29 @@ class AboutPage(QWidget):
         
         main_layout.addSpacing(40)
         
-        # 描述文本
-        description = QLabel(
-            "ClutUI Nextgen是ClutUI1.0后的下一代！\n"
-            "全新的Clut UI 2.0 界面，更加简洁美观\n"
-            "全新的项目结构，更加便于开发\n"
-            "全新的功能，更加强大\n"
-            "全新的体验，更加流畅\n"
-        )
-        description.setWordWrap(True)
-        description.setStyleSheet("""
-            QLabel {
-                color: #666666;
-                font-size: 14px;
-                line-height: 24px;
-                background: transparent;
-            }
-        """)
-        description.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(description)
+        main_layout.addSpacing(20)
         
-        # 添加额外的信息文本
-        extra_info = QLabel("FOR PYTHON 3.12 AND PYSIDE6 MADE BY ZZBUAOYE")  # 这里可以放置额外的文字内容
-        extra_info.setWordWrap(True)
-        extra_info.setStyleSheet("""
+        # 技术声明
+        tech_info = QLabel(
+            "本软件基于 Python 3.12 和 PySide6 开发\n"
+            "界面图标采用 Google Material Design Icons\n"
+            "遵循 Apache License 2.0 协议\n\n"
+            "完整许可声明请在官网查看：\n"
+            "https://zzbuaoye.us.kg/clutui/statement.txt"
+        )
+        tech_info.setWordWrap(True)
+        tech_info.setStyleSheet("""
             QLabel {
                 color: #666666;
-                font-size: 14px;
-                line-height: 24px;
+                font-size: 13px;
+                line-height: 22px;
                 background: transparent;
             }
         """)
-        extra_info.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(extra_info)
+        tech_info.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(tech_info)
+        
+        main_layout.addSpacing(10)
         
         # 版权信息
         copyright = QLabel("© 2024 ClutUI Nextgen. By ZZBuAoYe All rights reserved.")
@@ -143,7 +133,7 @@ class AboutPage(QWidget):
             main_window = self.window()
             if main_window:
                 main_window.show_notification(
-                    text="ClutUI Nextgen 已准备好为您服务喵~",
+                    text="ClutUI Nextgen Created A New Notification",
                     type=NotificationType.TIPS,
                     duration=3000
                 )
@@ -153,13 +143,3 @@ class AboutPage(QWidget):
             
         except Exception as e:
             log.error(f"弹出通知时遇到问题: {str(e)}")
-            # 尝试使用简单通知作为后备方案
-            try:
-                if self.window():
-                    self.window().show_notification(
-                        text="无法显示完整通知，但我们正在努力修复这个问题~",
-                        type=NotificationType.WARNING,
-                        duration=2000
-                    )
-            except Exception as backup_error:
-                log.error(f"备用通知也失败了: {str(backup_error)}")

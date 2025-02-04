@@ -3,12 +3,34 @@ from PySide6.QtWidgets import QWidget, QApplication, QLabel, QPushButton
 from PySide6.QtCore import Qt
 import platform
 import re
+import os
+import sys
+from core.log.log_manager import log
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller 打包后的路径
+        base_path = sys._MEIPASS
+    else:
+        # 开发环境的路径
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class FontManager:
     def __init__(self):
+        # 使用 resource_path 获取字体文件路径
+        self.icon_font_path = resource_path(os.path.join("core", "font", "icons", "MaterialIcons-Regular.ttf"))
+        # 如果找不到上面的路径，尝试根目录
+        if not os.path.exists(self.icon_font_path):
+            self.icon_font_path = resource_path("MaterialIcons-Regular.ttf")
+            
+        if not os.path.exists(self.icon_font_path):
+            raise FileNotFoundError(f"找不到字体文件: {self.icon_font_path}")
+
         self.chinese_font = "Microsoft YaHei"  # 换成更现代的微软雅黑UI
         self.english_font = "Arial"
         self.symbol_font = "Segoe UI"
+        self.material_font = "Material Icons"  # 添加 Material Icons 字体支持
 
         self._init_fonts()
         
@@ -18,6 +40,11 @@ class FontManager:
         
         # 使用新的推荐方式创建 QFontDatabase
         font_db = QFontDatabase
+        
+        # 加载 Material Icons 字体
+        font_id = QFontDatabase.addApplicationFont(self.icon_font_path)
+        if font_id < 0:
+            log.warning("Material Icons 字体加载失败")
         
         available_fonts = font_db.families()
         
@@ -80,7 +107,7 @@ class FontManager:
         font = QFont()
         font.setFamilies([self.chinese_font, self.english_font, self.symbol_font])
         
-        # 设置最强渲染参数 ！【招笑】
+        # 设置最强渲染参数
         font.setHintingPreference(QFont.HintingPreference.PreferNoHinting)  # 禁用 hinting 获得更平滑的轮廓
         font.setStyleStrategy(
             QFont.StyleStrategy.PreferAntialias |  # 抗锯齿
@@ -95,6 +122,38 @@ class FontManager:
         font.setPixelSize(16)                      # 默认像素大小
         
         return font
+
+    def create_icon_font(self, size=24):
+        """创建 Material Icons 字体"""
+        font = QFont(self.material_font)
+        font.setPixelSize(size)
+        return font
+
+    def get_icon_text(self, icon_name):
+        """获取 Material Icons 字体对应的 Unicode 字符"""
+        icon_map = {
+            'home': '\ue88a',         # 主页图标
+            'settings': '\ue8b8',     # 设置图标
+            'close': '\ue5cd',        # 关闭图标
+            'menu': '\ue5d2',         # 菜单图标
+            'arrow_back': '\ue5c4',   # 返回箭头
+            'arrow_forward': '\ue5c8', # 前进箭头
+            'refresh': '\ue5d5',      # 刷新图标
+            'search': '\ue8b6',       # 搜索图标
+            'info': '\ue88e',         # 信息图标
+            'warning': '\ue002',      # 警告图标
+            'error': '\ue000',        # 错误图标
+            'success': '\ue86c',      # 成功图标
+            'article': '\uef42',      # 文章/日志图标
+            'dashboard': '\ue871',    # 仪表盘图标
+            'person': '\ue7fd',       # 用户图标
+            'folder': '\ue2c7',       # 文件夹图标
+            'description': '\ue873',  # 描述/文档图标
+            'code': '\ue86f',         # 代码图标
+            'bug_report': '\ue868',   # Bug报告图标
+            'build': '\ue869',        # 构建/工具图标
+        }
+        return icon_map.get(icon_name, '')
 
     def apply_font(self, widget):
         if isinstance(widget, (QWidget, QApplication)):
@@ -146,4 +205,12 @@ class FontManager:
                 
         else:
             raise TypeError("不支持的类型,只能应用到QWidget或QApplication ")
+
+    def apply_icon_font(self, widget, size=24):
+        """应用 Material Icons 字体到控件"""
+        if isinstance(widget, (QWidget, QLabel)):
+            icon_font = self.create_icon_font(size)
+            widget.setFont(icon_font)
+        else:
+            raise TypeError("不支持的类型,只能应用到QWidget或QLabel ")
 

@@ -189,16 +189,13 @@ class QuickStartPage(QWidget):
             # 使用主窗口的通知方法
             if self.window():
                 self.window().show_notification(
-                    text=f"正在打开 {category} 喵~",
+                    text=f"正在打开 {category}  ",
                     type=NotificationType.TIPS,
                     duration=3000
                 )
         else:
             QMessageBox.warning(self, "提示", "无效的链接")
-
-    def on_main_button_clicked(self):
-        QMessageBox.information(self, "提示", "这是一个GUI演示模板")
-
+            
     def switch_page(self, page_name):
         self.switch_page_requested.emit(page_name)
         log.info(f"请求切换到页面: {page_name}") 

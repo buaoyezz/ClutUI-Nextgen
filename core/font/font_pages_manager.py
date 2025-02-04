@@ -13,13 +13,20 @@ class FontPagesManager:
         self.chinese_font = "Microsoft YaHei"  # 默认微软雅黑
         self.english_font = "Arial"
         self.symbol_font = "Segoe UI Symbol"
+        self.material_font = "Material Icons"  # 添加 Material Icons 字体
         
         self._init_fonts()
+        
+        # 加载 Material Icons 字体
+        font_id = QFontDatabase.addApplicationFont("core/font/icons/MaterialIcons-Regular.ttf")
+        if font_id < 0:
+            log.warning("Material Icons 字体加载失败")
         
         # 默认字体配置
         self.title_font = QFont("Microsoft YaHei", 24, QFont.Bold)  # 标题字体
         self.normal_font = QFont("Microsoft YaHei", 12)  # 普通文本字体
         self.small_font = QFont("Microsoft YaHei", 10)  # 小字体
+        self.icon_font = QFont("Material Icons", 24)  # Material Icons 字体配置
         
     def _init_fonts(self):
         # 获取系统可用字体
@@ -82,7 +89,7 @@ class FontPagesManager:
             else:
                 widget.setFont(font)
         else:
-            raise TypeError("不支持的类型,只能应用到QWidget或QApplication喵~")
+            raise TypeError("不支持的类型,只能应用到QWidget或QApplication ")
 
     def apply_subtitle_style(self, widget):
         """为子标题设置样式喵"""
@@ -102,3 +109,35 @@ class FontPagesManager:
                 margin: 5px 0;
             }
         """)
+
+    def apply_icon_font(self, widget, size=24):
+        """应用 Material Icons 字体"""
+        try:
+            if isinstance(widget, (QWidget, QLabel, QAction)):
+                icon_font = QFont(self.material_font)
+                icon_font.setPixelSize(size)
+                widget.setFont(icon_font)
+            else:
+                log.warning(f"不支持的控件类型: {type(widget)}")
+                
+        except Exception as e:
+            log.error(f"应用图标字体失败: {str(e)}")
+            
+    def get_icon_text(self, icon_name):
+        """获取 Material Icons 字体对应的 Unicode 字符"""
+        icon_map = {
+            'home': '',
+            'settings': '',
+            'close': '',
+            'menu': '',
+            'arrow_back': '',
+            'arrow_forward': '',
+            'refresh': '',
+            'search': '',
+            'info': '',
+            'warning': '',
+            'error': '',
+            'success': '',
+            # 可以继续添加更多图标映射
+        }
+        return icon_map.get(icon_name, '')
