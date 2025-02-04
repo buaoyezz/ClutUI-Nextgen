@@ -2,9 +2,11 @@ from PySide6.QtWidgets import (QLabel, QPushButton, QHBoxLayout, QWidget,
                              QVBoxLayout, QFrame, QGraphicsDropShadowEffect, QMessageBox)
 from PySide6.QtCore import Qt, Signal, QUrl
 from PySide6.QtGui import QColor, QDesktopServices
+from core.utils.notif import Notification
 from core.ui.buttons_blue import Button
 from core.log.log_manager import log
-
+from core.ui.little_card import LittleCard
+from core.utils.notif import Notification, NotificationType
 class InfoCard(QFrame):
     clicked = Signal(str)
     
@@ -126,21 +128,38 @@ class QuickStartPage(QWidget):
         
         main_layout.addSpacing(40)
         
-        # 信息卡片网格
+        # 信息卡片配置
+        cards_config = [
+            {
+                "title": "Pyside6 Link",
+                "description": "官方文档",
+                "link_url": "https://doc.qt.io/qtforpython-6/"
+            },
+            {
+                "title": "Python Link",
+                "description": "Python官网",
+                "link_url": "https://www.python.org/"
+            },
+            {
+                "title": "Clut UI Link",
+                "description": "项目仓库",
+                "link_url": "https://github.com/buaoyezz/ClutUI-Nextgen"
+            },
+            {
+                "title": "ZZBUAOYE Link",
+                "description": "作者主页",
+                "link_url": "https://github.com/buaoyezz"
+            }
+        ]
+        
+        # 创建卡片网格
         grid_layout = QHBoxLayout()
         grid_layout.setSpacing(25)
         
-        categories = [
-            "Pyside6 Link",
-            "Python Link",
-            "Clut UI Link",
-            "ZZBUAOYE Link"
-        ]
-        
-        for category in categories:
-            card = InfoCard(category)
+        for config in cards_config:
+            card = LittleCard(**config)
             card.clicked.connect(self.on_category_clicked)
-            self.info_cards[category] = card
+            self.info_cards[config["title"]] = card
             grid_layout.addWidget(card)
             
         main_layout.addLayout(grid_layout)
@@ -158,15 +177,22 @@ class QuickStartPage(QWidget):
         urls = {
             "Pyside6 Link": "https://doc.qt.io/qtforpython-6/",
             "Python Link": "https://www.python.org/",
-            "Clut UI Link": "https://github.com/buaoyezz/ClutUI-Nextgen",  # 替换为实际的 Clut UI 仓库地址
-            "ZZBUAOYE Link": "https://github.com/buaoyezz"  # 替换为实际的链接
+            "Clut UI Link": "https://github.com/buaoyezz/ClutUI-Nextgen",
+            "ZZBUAOYE Link": "https://github.com/buaoyezz"
         }
         
-        # 获取对应的 URL 并打开
         if category in urls:
             url = QUrl(urls[category])
             QDesktopServices.openUrl(url)
             log.info(f"打开链接: {urls[category]}")
+            
+            # 使用主窗口的通知方法
+            if self.window():
+                self.window().show_notification(
+                    text=f"正在打开 {category} 喵~",
+                    type=NotificationType.TIPS,
+                    duration=3000
+                )
         else:
             QMessageBox.warning(self, "提示", "无效的链接")
 

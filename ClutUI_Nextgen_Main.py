@@ -10,6 +10,7 @@ from core.animations.animation_manager import AnimationManager
 from core.font.font_manager import FontManager
 from core.log.log_manager import log
 from core.pages_core.pages_manager import PagesManager
+from core.utils.notif import Notification, NotificationType
 import time
 import sys
 import os
@@ -231,6 +232,8 @@ class MainWindow(QMainWindow):
         self._cleanup_timer = QTimer()
         self._cleanup_timer.setSingleShot(True)
         self._cleanup_timer.timeout.connect(self._finish_close)
+        
+        self._notifications = []  # 保存活动的通知引用
 
     def closeEvent(self, event):
         if self._closing:
@@ -301,6 +304,19 @@ class MainWindow(QMainWindow):
         except Exception as e:
             log.error(f"切换页面失败: {str(e)}")
 
+    def show_notification(self, text, type=NotificationType.TIPS, duration=3000):
+        notification = Notification(
+            text=text,
+            type=type,
+            duration=duration,
+            parent=self
+        )
+        self._notifications.append(notification)
+        notification.animation_finished.connect(
+            lambda: self._notifications.remove(notification) if notification in self._notifications else None
+        )
+        notification.show_notification()
+
 if __name__ == '__main__':
     try:
         app = QApplication([])
@@ -321,6 +337,13 @@ if __name__ == '__main__':
         window = MainWindow()
         window.show()
         log.info("ClutUI Nextgen 已经启动！")
+        notification = Notification(
+            text="这是一条通知消息喵~",
+            type=NotificationType.TIPS,
+            duration=3000,
+            parent=window
+        )
+        notification.show_notification()
         exit_code = app.exec()
         window._finish_close()
         

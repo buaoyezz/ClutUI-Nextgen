@@ -4,6 +4,9 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from core.ui.buttons_blue import Button
 from core.font.font_pages_manager import FontPagesManager
+from core.utils.notif import Notification, NotificationType
+from core.animations.notification_ani import NotificationAnimation
+from core.log.log_manager import log
 
 class AboutPage(QWidget):
     def __init__(self, parent=None):
@@ -68,6 +71,12 @@ class AboutPage(QWidget):
             QUrl("https://github.com/ZZBuaaYe/ClutUI-Nextgen")))
         buttons_layout.addWidget(github_btn)
         
+        # 添加通知按钮
+        notify_btn = Button(text="显示通知", style="blue")
+        notify_btn.setFixedSize(150, 40)
+        notify_btn.clicked.connect(self.show_notification)
+        buttons_layout.addWidget(notify_btn)
+        
         buttons_layout.setAlignment(Qt.AlignCenter)
         main_layout.addLayout(buttons_layout)
         
@@ -128,3 +137,29 @@ class AboutPage(QWidget):
                 background: #F8F9FA;
             }
         """)
+    def show_notification(self):
+        try:
+            # 获取主窗口实例
+            main_window = self.window()
+            if main_window:
+                main_window.show_notification(
+                    text="ClutUI Nextgen 已准备好为您服务喵~",
+                    type=NotificationType.TIPS,
+                    duration=3000
+                )
+                log.debug("关于页面欢迎通知已触发")
+            else:
+                log.error("无法获取主窗口实例")
+            
+        except Exception as e:
+            log.error(f"弹出通知时遇到问题: {str(e)}")
+            # 尝试使用简单通知作为后备方案
+            try:
+                if self.window():
+                    self.window().show_notification(
+                        text="无法显示完整通知，但我们正在努力修复这个问题~",
+                        type=NotificationType.WARNING,
+                        duration=2000
+                    )
+            except Exception as backup_error:
+                log.error(f"备用通知也失败了: {str(backup_error)}")
