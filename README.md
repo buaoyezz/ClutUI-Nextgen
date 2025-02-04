@@ -1,5 +1,6 @@
 # ClutUI-Nextgen
 ![LOGO](./preview/logo.png)
+---
 ![界面预览](./preview/preview.png)  
 
 ## ✨ 项目特色
@@ -29,6 +30,8 @@
 - QPropertyAnimation - 动画系统
 - RotatingFileHandler - 日志轮转
 - Fluent Design - 界面设计规范
+- Google Material Design - 界面设计规范
+- Google Icons - 图标库
 
 ## 📚 参考资料
 - [PySide6文档](https://doc.qt.io/qtforpython-6/index.html)
@@ -36,6 +39,9 @@
 - [Qt动画系统文档](https://doc.qt.io/qtforpython-6/PySide6/QtCore/QPropertyAnimation.html)
 - [日志轮转文档](https://docs.python.org/3/library/logging.handlers.html#logging.handlers.RotatingFileHandler)
 - [Fluent Design文档](https://docs.microsoft.com/en-us/windows/apps/design/style/color)
+- [Google Material Design文档](https://material.io/design)
+- [Google Icons](https://fonts.google.com/icons)
+
 
 ## 🤝 参与贡献
 欢迎提交PR！请遵循：
@@ -60,4 +66,37 @@
 - 建议刚开始不要修改项目结构容易混乱思绪
 - 然后运行`python ClutUI_Nextgen_Main.py`即可
 
-感谢您的使用和支持，祝您开发愉快！
+## 📦 打包指南
+- 先安装PyInstaller最新版
+- 然后使用PyInstaller打包
+- 指令如下请在ClutUI_Nextgen_Main.py同级目录下执行
+'''base
+pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" --add-data="MaterialIcons-Regular.ttf;." --add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" --add-data="config;config" --add-data="core;core" --add-data="pages;pages" --add-data="preview;preview" --name="ClutUI_Nextgen" ClutUI_Nextgen_Main.py
+'''
+- 打包后运行`dist`下的`ClutUI_Nextgen_Main.exe`即可
+
+## ✨ 对比1.0 / NextGen提升了什么
+> 1.0特性
+- 基于PyQt5开发的
+- 存在众多bug和体验上的不适
+- 没有自带的日志面板
+- 没任何出色的设计
+- 项目结构混乱
+- 兼容性差
+> NextGen特性
+- 基于Pyside6开发的，所以2.0版本在性能上比1.0版本更加优秀
+- 在设计上更为现代化，亮色主题和只能亮暗色文字带来更好的观感
+- 日志功能集成进了核心能力中，可以实时监控和统计日志
+- 采用Google Material Design的Icons给用户带来更好的体验
+- 项目结构清晰，易于维护和扩展
+- 项目为MIT协议，并且采用Google Material Design的Icons，这将会让项目更为易用免去了绘制图标的烦恼
+
+## ❤️ LICENSE INFO AND THANKS TO:
+- LGPL   Pyside6                © 2025 Qt Company | PySide6 
+- Apache Google Material Design © 2025 Google     | Google Material Design
+- MIT    ClutUI-Nextgen         © 2025 ZZBuAoYe   | ClutUI-Nextgen
+
+## 🍞 END
+- 感谢您的使用和支持，祝您开发愉快！
+- Update 2025-02-04 17:45:02 (UTC+8)
+
