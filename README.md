@@ -85,7 +85,7 @@ pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" --add-dat
 - 兼容性差
 > NextGen特性
 - 基于Pyside6开发的，所以2.0版本在性能上比1.0版本更加优秀
-- 在设计上更为现代化，亮色主题和只能亮暗色文字带来更好的观感
+- 在设计上更为现代化，亮色主题和智能亮暗色文字带来更好的观感
 - 日志功能集成进了核心能力中，可以实时监控和统计日志
 - 采用Google Material Design的Icons给用户带来更好的体验
 - 项目结构清晰，易于维护和扩展
