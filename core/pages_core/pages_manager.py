@@ -7,6 +7,8 @@ from pages.log_page import LogPage
 from core.animations.animation_manager import AnimationManager
 from core.log.log_manager import log
 from core.font.font_manager import FontManager
+from core.font.font_pages_manager import FontPagesManager
+from core.animations.animation_pagemanager import PageAnimationManager
 
 class PagesManager:
     def __init__(self):
@@ -18,10 +20,11 @@ class PagesManager:
         
         # 创建动画管理器
         self.animation_manager = AnimationManager()
+        self.page_animation_manager = PageAnimationManager()
         
         # 创建字体管理器
         self.font_manager = FontManager()
-        
+        self.font_pages_manager = FontPagesManager()
         # 创建页面实例
         self.quick_start_page = QuickStartPage()
         self.about_page = AboutPage()
@@ -67,18 +70,17 @@ class PagesManager:
         self.buttons["快速开始"].setChecked(True)
         self.stacked_widget.setCurrentWidget(self.quick_start_page)
         self.current_page = "快速开始"
+        self.page_animation_manager.create_button_click_animation(self.buttons["快速开始"])
         
         log.info("初始化页面管理器")
     
     def create_sidebar_button(self, text):
-        btn = QPushButton()  # 创建空按钮
+        btn = QPushButton()
         
-        # 创建水平布局
         layout = QHBoxLayout()
         layout.setContentsMargins(20, 0, 0, 0)
         layout.setSpacing(10)
         
-        # 添加图标
         if text in self.icons:
             icon_label = QLabel(self.icons[text])
             self.font_manager.apply_icon_font(icon_label, size=20)
@@ -91,13 +93,15 @@ class PagesManager:
             """)
             layout.addWidget(icon_label)
         
-        # 添加文本
         text_label = QLabel(text)
-        self.font_manager.apply_font(text_label)
+        # 设置字体
+        default_font = self.font_pages_manager.setFont("HarmonyOS Sans SC", size=14)
+        text_label.setFont(default_font)
+        log.info(f"PagesManager设置字体: {default_font.family()}")
+            
         text_label.setStyleSheet("""
             QLabel {
                 color: #333333;
-                font-size: 14px;
             }
         """)
         layout.addWidget(text_label)
@@ -115,7 +119,7 @@ class PagesManager:
         # 设置布局
         btn.setLayout(layout)
         
-        # 修改样式表以适应图标
+        # 修改按钮样式表
         btn.setStyleSheet("""
             QPushButton {
                 border: none;
@@ -128,8 +132,7 @@ class PagesManager:
                 background-color: rgba(33, 150, 243, 0.1);
             }
             QPushButton:checked {
-                background-color: rgba(33, 150, 243, 0.15);
-                border-left: 3px solid #2196F3;
+                background: transparent;
             }
             QPushButton:checked QLabel {
                 color: #2196F3;
@@ -155,10 +158,12 @@ class PagesManager:
             log.error(f"页面 {name} 不存在")
             return
         
+        # 创建按钮点击动画
+        self.page_animation_manager.create_button_click_animation(self.buttons[name])
+        
         # 检查是否正在切换到当前页面
         if name == self.current_page:
             log.debug(f"已经在 {name} 页面，无需切换")
-            # 确保当前按钮保持选中状态
             self.buttons[name].setChecked(True)
             return
         
@@ -191,8 +196,8 @@ class PagesManager:
         log.info(f"页面切换完成: {name}")
     
     def get_stacked_widget(self):
-        """获取堆叠窗口部件"""
         return self.stacked_widget
         
     def stop_animations(self) -> None:
         self.animation_manager.stop_all_animations()
+        self.page_animation_manager.stop_animations()
