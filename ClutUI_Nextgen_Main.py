@@ -35,9 +35,8 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # 添加标题栏
         self.title_bar = TitleBar(self)
-        self.title_bar.title_label.setText("ClutUI Next Generation | For Pyside6 ")
+        self.title_bar.title_label.setText("ClutUI Next Generation")
         main_layout.addWidget(self.title_bar)
         
         # 创建内容区域容器
@@ -92,7 +91,7 @@ class MainWindow(QMainWindow):
     def switch_page(self, page_name):
         WindowManager.switch_page(self, page_name)
 
-    def show_notification(self, text, type=NotificationType.TIPS, duration=3000):
+    def show_notification(self, text, type=NotificationType.TIPS, duration=1000):
         notification = Notification(
             text=text,
             type=type,
@@ -115,7 +114,6 @@ if __name__ == '__main__':
         notification = Notification(
             text="这是一条通知消息 ",
             type=NotificationType.TIPS,
-            duration=3000,
             parent=window
         )
         notification.show_notification()
