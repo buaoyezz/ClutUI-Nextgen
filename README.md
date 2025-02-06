@@ -70,8 +70,25 @@
 - 先安装PyInstaller最新版
 - 然后使用PyInstaller打包
 - 指令如下请在ClutUI_Nextgen_Main.py同级目录下执行
-```base
+```python
+# 0.0.2 版本适配
 pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" --add-data="MaterialIcons-Regular.ttf;." --add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" --add-data="config;config" --add-data="core;core" --add-data="pages;pages" --add-data="preview;preview" --name="ClutUI_Nextgen" ClutUI_Nextgen_Main.py
+```
+```python
+# 0.0.3 版本适配
+pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" ^
+--add-data="MaterialIcons-Regular.ttf;." ^
+--add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" ^
+--add-data="core/font/font/HarmonyOS_Sans_SC_Bold.ttf;core/font/font" ^
+--add-data="core/font/font/HarmonyOS_Sans_SC_Regular.ttf;core/font/font" ^
+--add-data="core/font/font/Mulish-Bold.ttf;core/font/font" ^
+--add-data="core/font/font/Mulish-Regular.ttf;core/font/font" ^
+--add-data="config;config" ^
+--add-data="core;core" ^
+--add-data="pages;pages" ^
+--add-data="preview;preview" ^
+--name="ClutUI_Nextgen" ^
+ClutUI_Nextgen_Main.py
 ```
 - 打包后运行`dist`下的`ClutUI_Nextgen_Main.exe`即可
 
@@ -85,7 +102,7 @@ pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" --add-dat
 - 兼容性差
 > NextGen特性
 - 基于Pyside6开发的，所以2.0版本在性能上比1.0版本更加优秀
-- 在设计上更为现代化，亮色主题和智能亮暗色文字带来更好的观感
+- 在设计上更为现代化，亮色主题和只能亮暗色文字带来更好的观感
 - 日志功能集成进了核心能力中，可以实时监控和统计日志
 - 采用Google Material Design的Icons给用户带来更好的体验
 - 项目结构清晰，易于维护和扩展
