@@ -34,6 +34,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QColor
 from core.animations.notification_ani import NotificationAnimation
+from core.font.font_pages_manager import FontPagesManager
 from core.font.font_manager import FontManager
 from core.log.log_manager import log
 from enum import Enum, auto
@@ -45,6 +46,26 @@ class NotificationType:
     WARN = "Warn"
     ERROR = "错误"
     FAILED = "失败"
+
+# 通知样式映射
+NOTIFICATION_STYLES = {
+    NotificationType.INFO: ("#1A73E8", "rgba(26, 115, 232, 0.05)", "rgba(26, 115, 232, 0.1)"),
+    NotificationType.TIPS: ("#1A73E8", "rgba(26, 115, 232, 0.05)", "rgba(26, 115, 232, 0.1)"),
+    NotificationType.WARNING: ("#F9A825", "rgba(249, 168, 37, 0.05)", "rgba(249, 168, 37, 0.1)"),
+    NotificationType.WARN: ("#F9A825", "rgba(249, 168, 37, 0.05)", "rgba(249, 168, 37, 0.1)"),
+    NotificationType.ERROR: ("#D93025", "rgba(217, 48, 37, 0.05)", "rgba(217, 48, 37, 0.1)"),
+    NotificationType.FAILED: ("#D93025", "rgba(217, 48, 37, 0.05)", "rgba(217, 48, 37, 0.1)")
+}
+
+# 图标映射
+NOTIFICATION_ICONS = {
+    NotificationType.INFO: 'info',
+    NotificationType.TIPS: 'info',
+    NotificationType.WARNING: 'warning',
+    NotificationType.WARN: 'warning',
+    NotificationType.ERROR: 'error',
+    NotificationType.FAILED: 'error'
+}
 
 class Notification(NotificationAnimation):
     # 类级别的通知队列管理
@@ -63,15 +84,22 @@ class Notification(NotificationAnimation):
         self.setAttribute(Qt.WA_ShowWithoutActivating)
         
         # 动画时长设置
-        self.show_animation_duration = 1000  # 显示动画时长增加到1秒
-        self.hide_animation_duration = 800   # 隐藏动画时长增加到0.8秒
-        self.adjust_animation_duration = 600 # 位置调整动画时长增加到0.6秒
+        self.show_animation_duration = 1000
+        self.hide_animation_duration = 800
+        self.adjust_animation_duration = 600
         
-        # 保存参数
+        # 保存参数，duration 直接使用传入的值
         self.text = text
         self.title = title
-        self.type = type
-        self.duration = max(duration, 5000)  # 确保最短显示5秒
+        self.notification_type = type
+        self.duration = duration  # 移除 max() 限制，直接使用传入的值
+        
+        # 保存类型和获取对应的图标
+        self.icon_name = NOTIFICATION_ICONS.get(type, 'info')
+        
+        # 初始化字体管理器
+        self.font_manager = FontManager()
+        self.font_pages_manager = FontPagesManager()
         
         # 初始化UI
         self._init_ui()
@@ -81,53 +109,57 @@ class Notification(NotificationAnimation):
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.on_timeout)
         
-        # 连接动画完成信号
-        self.animation_finished.connect(self._on_hide_finished)
+        # 标记动画状态
+        self._show_animation_finished = False
         
     def _init_ui(self):
+        # 获取通知样式
+        text_color, bg_color, hover_color = NOTIFICATION_STYLES.get(
+            self.notification_type, 
+            NOTIFICATION_STYLES[NotificationType.TIPS]
+        )
+        
         # 创建布局
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
         layout.setSpacing(4)
         
         # 创建标题和内容标签
-        title = self.title if self.title else self.type
+        title = self.title if self.title else self.notification_type
+        
+        # 创建水平布局用于图标和标题
+        title_layout = QHBoxLayout()
+        title_layout.setSpacing(8)
+        
+        # 添加图标标签
+        self.icon_label = QLabel()
+        self.font_manager.apply_icon_font(self.icon_label, 20)
+        
+        # 设置图标
+        self.icon_label.setText(self.font_manager.get_icon_text(self.icon_name))
+        self.icon_label.setStyleSheet(f"color: {text_color};")
+        
         self.title_label = QLabel(title)
         self.text_label = QLabel(self.text)
         self.text_label.setWordWrap(True)
         
-        # 应用字体管理器的优化字体
-        font_manager = FontManager()
-        font_manager.apply_font(self.title_label)
-        font_manager.apply_font(self.text_label)
+        # 使用字体管理器，调整字体粗细
+        self.font_pages_manager.apply_subtitle_style(self.title_label)
+        self.title_label.setStyleSheet(f"color: {text_color}; font-weight: 500;")
         
-        # 只需设置字号和粗细，其他字体属性由FontManager处理
-        title_font = self.title_label.font()
-        title_font.setPointSize(14)
-        title_font.setBold(True)
-        self.title_label.setFont(title_font)
+        self.font_pages_manager.apply_normal_style(self.text_label)
+        self.text_label.setStyleSheet("color: #FFFFFF;")
         
-        text_font = self.text_label.font()
-        text_font.setPointSize(12)
-        self.text_label.setFont(text_font)
-        
-        # 根据类型设置样式
-        style_map = {
-            NotificationType.INFO: ("#1A73E8", "rgba(26, 115, 232, 0.05)", "rgba(26, 115, 232, 0.1)"),
-            NotificationType.TIPS: ("#1A73E8", "rgba(26, 115, 232, 0.05)", "rgba(26, 115, 232, 0.1)"),
-            NotificationType.WARNING: ("#F9A825", "rgba(249, 168, 37, 0.05)", "rgba(249, 168, 37, 0.1)"),
-            NotificationType.WARN: ("#F9A825", "rgba(249, 168, 37, 0.05)", "rgba(249, 168, 37, 0.1)"),
-            NotificationType.ERROR: ("#D93025", "rgba(217, 48, 37, 0.05)", "rgba(217, 48, 37, 0.1)"),
-            NotificationType.FAILED: ("#D93025", "rgba(217, 48, 37, 0.05)", "rgba(217, 48, 37, 0.1)")
-        }
-        
-        text_color, bg_color, hover_color = style_map.get(self.type, style_map[NotificationType.TIPS])
-        
+        # 添加图标和标题到水平布局
+        title_layout.addWidget(self.icon_label)
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch()
+
         # 创建水平布局用于图标和内容
         content_layout = QHBoxLayout()
         content_layout.setSpacing(10)
         content_layout.setContentsMargins(12, 10, 12, 10)
-        
+
         # 创建左侧颜色条
         color_bar = QWidget()
         color_bar.setFixedWidth(4)
@@ -141,7 +173,7 @@ class Notification(NotificationAnimation):
         content_widget_layout = QVBoxLayout(content_widget)
         content_widget_layout.setContentsMargins(0, 0, 0, 0)
         content_widget_layout.setSpacing(4)
-        content_widget_layout.addWidget(self.title_label)
+        content_widget_layout.addLayout(title_layout) 
         content_widget_layout.addWidget(self.text_label)
         
         # 添加到水平布局
@@ -161,10 +193,6 @@ class Notification(NotificationAnimation):
             QLabel {{
                 background: transparent;
                 border: none;
-            }}
-            QLabel[accessibleName="title"] {{
-                color: {text_color};
-                font-weight: bold;
             }}
         """)
         
@@ -192,22 +220,22 @@ class Notification(NotificationAnimation):
         # 获取屏幕尺寸
         screen = QApplication.primaryScreen().availableGeometry()
         
-        # 计算基础位置 (右上角)
+        # 计算基础位置
         margin = 20
         start_x = screen.right() - self.width() - margin
         
-        # 计算垂直位置，考虑已有的通知
+        # 修改这里：只考虑当前活动的通知数量
         total_height = self.height() + margin
-        offset = len(Notification.active_notifications) * total_height
+        active_count = len([n for n in Notification.active_notifications if n.isVisible()])
+        offset = active_count * total_height
         
-        # 修改起始和结束位置，确保在屏幕内
-        start_y = screen.top() + offset + total_height  # 从屏幕顶部开始
-        end_y = screen.top() + offset + margin  # 结束位置在屏幕内
+        start_y = screen.top() + offset + total_height
+        end_y = screen.top() + offset + margin
         
         # 将自己添加到活动通知列表
         Notification.active_notifications.append(self)
         
-        # 开始显示动画（使用新的动画时长）
+        # 开始显示动画
         self.pos_animation.setDuration(self.show_animation_duration)
         self.opacity_animation.setDuration(self.show_animation_duration)
         
@@ -216,24 +244,34 @@ class Notification(NotificationAnimation):
             QPoint(start_x, end_y)
         )
         
-        # 启动自动关闭定时器（添加动画时长，确保动画完成后才开始计时）
-        self.timer.start(self.duration + self.show_animation_duration)
-        log.debug(f"显示通知: {self.text_label.text()}")
+        # 等待显示动画完成后再开始计时
+        def start_timer():
+            self._show_animation_finished = True
+            log.debug(f"通知显示动画完成，开始计时 {self.duration}ms")
+            self.timer.start(self.duration)
+            
+        QTimer.singleShot(self.show_animation_duration + 100, start_timer)
+        log.debug(f"显示通知: {self.text_label.text()}, 持续时间: {self.duration}ms")
         
     def on_timeout(self):
+        if not self._show_animation_finished:
+            log.debug("显示动画未完成，延迟隐藏")
+            QTimer.singleShot(500, self.on_timeout)
+            return
+            
         # 计算隐藏动画的位置
         screen = QApplication.primaryScreen().availableGeometry()
-        margin = 20
+        margin = 8  # 这里也要改为8，保持一致
         start_x = screen.right() - self.width() - margin
         current_y = self.y()
         end_y = current_y - self.height() - margin  # 向上滑出
         
+        log.debug(f"通知开始隐藏，显示时长: {self.duration}ms")
         # 开始隐藏动画
         self.hide_animation(
             QPoint(start_x, current_y),
             QPoint(start_x, end_y)
         )
-        log.debug("通知超时,开始隐藏")
         
     def _on_hide_finished(self):
         # 从活动通知列表中移除自己
@@ -241,23 +279,26 @@ class Notification(NotificationAnimation):
             index = Notification.active_notifications.index(self)
             Notification.active_notifications.pop(index)
             
-            # 重新调整其他通知的位置
-            self._adjust_other_notifications(index)
+            # 重新调整其他通知的位置，从顶部开始重新排列
+            self._adjust_other_notifications(0)  # 修改这里，总是从0开始重新排列
             
         # 最后删除自己
         self.deleteLater()
         
-    def _adjust_other_notifications(self, removed_index):
+    def _adjust_other_notifications(self, start_index):
         screen = QApplication.primaryScreen().availableGeometry()
         margin = 20
         total_height = self.height() + margin
         
-        # 调整removed_index之后的所有通知位置
-        for i, notif in enumerate(Notification.active_notifications[removed_index:]):
-            target_y = screen.top() + (i + removed_index) * total_height + margin
+        # 修改这里：只调整可见的通知
+        visible_notifications = [n for n in Notification.active_notifications if n.isVisible()]
+        
+        # 从顶部开始重新排列所有可见通知
+        for i, notif in enumerate(visible_notifications):
+            target_y = screen.top() + (i * total_height) + margin
             current_x = notif.x()
             
-            # 创建位置动画（使用新的调整动画时长）
+            # 创建位置动画
             anim = QPropertyAnimation(notif, b"pos", notif)
             anim.setDuration(self.adjust_animation_duration)
             anim.setEasingCurve(QEasingCurve.OutCubic)
@@ -265,15 +306,15 @@ class Notification(NotificationAnimation):
             anim.setEndValue(QPoint(current_x, target_y))
             anim.start()
 
-# 快速通知方法
-def show_info(text, duration=3000):
+# 快速通知方法默认时间调整为8秒
+def show_info(text, duration=8000):
     notif = Notification(text=text, type=NotificationType.INFO, duration=duration)
     notif.show_notification()
     
-def show_warning(text, duration=3000):
+def show_warning(text, duration=8000):
     notif = Notification(text=text, type=NotificationType.WARNING, duration=duration)
     notif.show_notification()
     
-def show_error(text, duration=3000):
+def show_error(text, duration=8000):
     notif = Notification(text=text, type=NotificationType.ERROR, duration=duration)
     notif.show_notification()
