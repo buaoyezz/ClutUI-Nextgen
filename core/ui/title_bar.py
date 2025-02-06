@@ -63,7 +63,7 @@ class TitleBar(QWidget):
         self.title_label.setFont(font)
         
         # 最小化和关闭按钮
-        self.min_button = QPushButton("一")
+        self.min_button = QPushButton("─")
         self.close_button = QPushButton("✕")
         # 应用字体到按钮
         self.font_manager.apply_font(self.min_button)
