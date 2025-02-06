@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QGraphicsDropShadowEffect, QHBoxLayout, QWidget
 from PySide6.QtCore import Qt, Signal, QUrl
 from PySide6.QtGui import QColor, QDesktopServices
 from core.font.font_manager import FontManager
+from core.font.font_pages_manager import FontPagesManager
 from core.log.log_manager import log
 from core.utils.notif import Notification, NotificationType
 
@@ -34,55 +35,84 @@ class LittleCard(QFrame):
         self.notify_on_click = notify_on_click
         
         # 创建字体管理器
+        self.font_pages_manager = FontPagesManager()
         self.font_manager = FontManager()
         
         self.setup_ui()
         
     def setup_ui(self):
-        """设置UI布局"""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(10)
         
-        # 标题
+        # 标题容器
+        title_container = QHBoxLayout()
+        title_container.setSpacing(8)
+        
+        # 标题图标
+        self.icon_label = QLabel(self.font_manager.get_icon_text('article'))
+        self.font_manager.apply_icon_font(self.icon_label, size=20)
+        self.icon_label.setStyleSheet("""
+            QLabel {
+                color: #333333;
+                background: transparent;
+            }
+        """)
+        
+        # 标题文字
         self.title_label = QLabel(self.title)
         self.title_label.setStyleSheet("""
             QLabel {
                 color: #333333;
-                font-size: 16px;
-                font-weight: bold;
                 background: transparent;
             }
         """)
-        self.font_manager.apply_font(self.title_label)
+        self.font_pages_manager.apply_normal_style(self.title_label)
+        
+        # 添加图标和标题到容器
+        title_container.addWidget(self.icon_label)
+        title_container.addWidget(self.title_label)
+        title_container.addStretch()
         
         # 描述文字
         self.description_label = QLabel(self.description)
         self.description_label.setStyleSheet("""
             QLabel {
-                color: #2196F3;
-                font-size: 24px;
-                font-weight: bold;
+                color: #666666;
                 background: transparent;
             }
         """)
-        self.font_manager.apply_font(self.description_label)
+        self.font_pages_manager.apply_small_style(self.description_label)
+        
+        # 链接容器
+        link_container = QHBoxLayout()
+        link_container.setSpacing(4)
+        
+        # 创建一个单独的widget来包含链接文字和图标
+        link_widget = QWidget()
+        link_widget.setObjectName("linkWidget")
+        link_widget_layout = QHBoxLayout(link_widget)
+        link_widget_layout.setContentsMargins(8, 4, 8, 4)
+        link_widget_layout.setSpacing(4)
         
         # 链接文字
-        self.link_label = QLabel(self.link_text)
-        self.link_label.setStyleSheet("""
-            QLabel {
-                color: #666666;
-                font-size: 12px;
-                background: transparent;
-            }
-        """)
-        self.font_manager.apply_font(self.link_label)
+        self.link_text_label = QLabel(self.link_text.replace('➡', ''))
+        self.link_text_label.setObjectName("linkText")
+        self.font_pages_manager.apply_small_style(self.link_text_label)
         
-        # 添加到布局
-        layout.addWidget(self.title_label, alignment=Qt.AlignLeft)
+        # 链接箭头图标
+        self.link_icon = QLabel(self.font_manager.get_icon_text('arrow_forward'))
+        self.link_icon.setObjectName("linkIcon")
+        self.font_manager.apply_icon_font(self.link_icon, size=16)
+        
+        # 添加到链接容器
+        link_widget_layout.addWidget(self.link_text_label)
+        link_widget_layout.addWidget(self.link_icon)
+        
+        # 直接添加到主布局，不使用额外的容器
+        layout.addLayout(title_container)
         layout.addWidget(self.description_label, alignment=Qt.AlignRight)
-        layout.addWidget(self.link_label, alignment=Qt.AlignRight)
+        layout.addWidget(link_widget, alignment=Qt.AlignRight)
         
         # 卡片样式
         self.setStyleSheet("""
@@ -92,8 +122,18 @@ class LittleCard(QFrame):
                 border: 1px solid #E0E0E0;
             }
             LittleCard:hover {
-                background: #F5F5F5;
                 border: 1px solid #2196F3;
+            }
+            QWidget#linkWidget {
+                background: rgba(33, 150, 243, 0.08);
+                border-radius: 4px;
+            }
+            #linkText, #linkIcon {
+                color: #666666;
+            }
+            LittleCard:hover #linkText,
+            LittleCard:hover #linkIcon {
+                color: #2196F3;
             }
         """)
         
@@ -105,22 +145,10 @@ class LittleCard(QFrame):
         self.setGraphicsEffect(shadow)
         
     def mousePressEvent(self, event):
-        """处理鼠标点击事件"""
         if event.button() == Qt.LeftButton:
             self.clicked.emit(self.title)
-            if self.link_url:
-                QDesktopServices.openUrl(QUrl(self.link_url))
-                log.info(f"打开链接: {self.link_url}")
-                
-                if self.notify_on_click:
-                    Notification(
-                        text=f"正在打开 {self.title} 链接",
-                        type=NotificationType.TIPS,
-                        duration=3000
-                    ).show_notification()
-                    
+            
     def update_content(self, title=None, description=None, link_text=None, link_url=None):
-        """更新卡片内容"""
         if title is not None:
             self.title = title
             self.title_label.setText(title)
@@ -131,7 +159,7 @@ class LittleCard(QFrame):
             
         if link_text is not None:
             self.link_text = link_text
-            self.link_label.setText(link_text)
+            self.link_text_label.setText(link_text)
             
         if link_url is not None:
             self.link_url = link_url 
