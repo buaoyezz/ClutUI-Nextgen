@@ -1,143 +1,161 @@
 # 字体管理器 -Pages
 
 from PySide6.QtGui import QFont, QFontDatabase, QAction
-from PySide6.QtWidgets import QWidget, QApplication, QLabel
+from PySide6.QtWidgets import QWidget, QApplication, QLabel, QPushButton
+from core.ui.buttons_blue import Button  # 从我们自己的模块导入 Button
 from PySide6.QtCore import Qt
 import platform
 from core.log.log_manager import log
+import os
+import sys
+from core.font.font_manager import FontManager
+
+def resource_path(relative_path):
+    base_path = sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class FontPagesManager:
-    """页面字体管理器"""
+    FONT_CONFIGS = {
+        'default': {
+            'primary': 'HarmonyOS Sans SC',
+            'secondary': 'Mulish',
+            'icon': 'Material Icons'
+        },
+        'fallback': {
+            'Windows': {'chinese': 'Source Han Sans CN', 'english': 'Roboto'},
+            'Darwin': {'chinese': 'Source Han Sans CN', 'english': 'Roboto'},
+            'Linux': {'chinese': 'Noto Sans CJK SC', 'english': 'Ubuntu'}
+        }
+    }
     
+    FONT_FILES = {
+        'HarmonyOS Sans SC': 'HarmonyOS_Sans_SC_Regular.ttf',
+        'HarmonyOS Sans SC Bold': 'HarmonyOS_Sans_SC_Bold.ttf',
+        'Mulish': 'Mulish-Regular.ttf',
+        'Mulish Bold': 'Mulish-Bold.ttf',
+        'Material Icons': 'MaterialIcons-Regular.ttf'
+    }
+
     def __init__(self):
-        self.chinese_font = "Microsoft YaHei"  # 默认微软雅黑
-        self.english_font = "Arial"
-        self.symbol_font = "Segoe UI Symbol"
-        self.material_font = "Material Icons"  # 添加 Material Icons 字体
+        self.fonts = {}
+        self._init_font_paths()
+        self._load_fonts()
+        self._setup_font_objects()
+
+    def _init_font_paths(self):
+        self.font_paths = {}
+        for font_name, file_name in self.FONT_FILES.items():
+            folder = 'icons' if 'Material' in font_name else 'font'
+            path = resource_path(os.path.join("core", "font", folder, file_name))
+            self.font_paths[font_name] = path
+
+    def _load_fonts(self):
+        font_db = QFontDatabase()
+        loaded_fonts = set()
         
-        self._init_fonts()
-        
-        # 加载 Material Icons 字体
-        font_id = QFontDatabase.addApplicationFont("core/font/icons/MaterialIcons-Regular.ttf")
-        if font_id < 0:
-            log.warning("Material Icons 字体加载失败")
-        
-        # 默认字体配置
-        self.title_font = QFont("Microsoft YaHei", 24, QFont.Bold)  # 标题字体
-        self.normal_font = QFont("Microsoft YaHei", 12)  # 普通文本字体
-        self.small_font = QFont("Microsoft YaHei", 10)  # 小字体
-        self.icon_font = QFont("Material Icons", 24)  # Material Icons 字体配置
-        
-    def _init_fonts(self):
-        # 获取系统可用字体
-        font_db = QFontDatabase
-        available_fonts = font_db.families()
-        
-        # 检查并设置备选字体
-        if self.chinese_font not in available_fonts:
-            self.chinese_font = "SimHei"  # 备用黑体
+        for font_name, path in self.font_paths.items():
+            if os.path.exists(path):
+                font_id = font_db.addApplicationFont(path)
+                if font_id >= 0:
+                    families = font_db.applicationFontFamilies(font_id)
+                    if families:
+                        loaded_fonts.add(families[0])
+                        log.info(f"加载字体成功: {families[0]}")
+                        log.info(f"实际字体名称: {families[0]}")
+                        continue
+            log.error(f"字体加载失败: {font_name}")
+
+        self._handle_fallbacks(loaded_fonts)
+
+    def _handle_fallbacks(self, loaded_fonts):
+        # 如果字体已经成功加载，就不需要使用备选字体
+        if 'HarmonyOS Sans SC' in loaded_fonts:
+            self.FONT_CONFIGS['default']['primary'] = 'HarmonyOS Sans SC'
+            return
             
-        if self.english_font not in available_fonts:
-            self.english_font = "Arial"
-    
+        # 只有在字体加载失败时才使用备选字体
+        system = platform.system()
+        fallbacks = self.FONT_CONFIGS['fallback'].get(system, {})
+        self.FONT_CONFIGS['default']['primary'] = fallbacks.get('chinese')
+        log.info(f"使用备选中文字体: {fallbacks.get('chinese')}")
+            
+        if 'Mulish' not in loaded_fonts:
+            self.FONT_CONFIGS['default']['secondary'] = fallbacks.get('english')
+            log.info(f"使用备选英文字体: {fallbacks.get('english')}")
+
+    def _setup_font_objects(self):
+        fonts = self.FONT_CONFIGS['default']
+        
+        self.title_font = self._create_font([fonts['primary'], fonts['secondary'], fonts['icon']], 36, QFont.Weight.Bold)
+        self.subtitle_font = self._create_font([fonts['primary'], fonts['secondary']], 16, QFont.Weight.Medium)
+        self.normal_font = self._create_font([fonts['primary'], fonts['secondary'], fonts['icon']], 14)
+        self.small_font = self._create_font([fonts['primary'], fonts['secondary'], fonts['icon']], 13)
+        self.button_font = self._create_font([fonts['primary'], fonts['secondary']], 14, QFont.Weight.Medium)
+        self.icon_font = self._create_font([fonts['icon']], 24)
+
+    def _create_font(self, families, size, weight=QFont.Weight.Normal, letter_spacing=0.5):
+        font = QFont()
+        font.setFamilies(families)
+        font.setPixelSize(size)
+        font.setWeight(weight)
+        font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, letter_spacing)
+        return font
+
+    def setFont(self, font_name, size=14, weight=QFont.Weight.Normal):
+        if not isinstance(font_name, str):
+            log.warning(f"字体名称必须是字符串类型")
+            return None
+            
+        font = QFont()
+        font.setFamily(font_name)
+        font.setPixelSize(size)
+        font.setWeight(weight)
+        return font
+
     def apply_font(self, widget, font_type="normal"):
-        """应用字体到控件"""
-        try:
-            if isinstance(widget, (QWidget, QLabel, QAction)):  # 添加 QAction 支持
-                if font_type == "title":
-                    widget.setFont(self.title_font)
-                elif font_type == "small":
-                    widget.setFont(self.small_font)
-                else:
-                    widget.setFont(self.normal_font)
-            else:
-                log.warning(f"不支持的控件类型: {type(widget)}")
-                
-        except Exception as e:
-            log.error(f"应用字体失败: {str(e)}")
-            
+        if not isinstance(widget, (QWidget, QLabel, QAction)):
+            log.warning(f"不支持的控件类型: {type(widget)}")
+            return
+
+        font_map = {
+            "title": self.title_font,
+            "normal": self.normal_font,
+            "small": self.small_font
+        }
+        widget.setFont(font_map.get(font_type, self.normal_font))
+
+    def apply_icon_font(self, widget, size=24):
+        if isinstance(widget, (QWidget, QLabel, QAction)):
+            icon_font = self._create_font([self.FONT_CONFIGS['default']['icon']], size)
+            widget.setFont(icon_font)
+        else:
+            log.warning(f"不支持的控件类型: {type(widget)}")
+
+    def get_icon_text(self, icon_name):
+        font_manager = FontManager()
+        return font_manager.get_icon_text(icon_name)
+
     def apply_title_style(self, widget):
-        """应用标题字体"""
         self.apply_font(widget, "title")
         
     def apply_normal_style(self, widget):
-        """应用普通字体"""
         self.apply_font(widget, "normal")
         
     def apply_small_style(self, widget):
-        """应用小字体"""
         self.apply_font(widget, "small")
-
-    def apply_font_only(self, widget):
-        """
-        只应用字体，不设置任何颜色
-        """
-        if isinstance(widget, (QWidget, QApplication)):
-            font = QFont()
-            font.setFamilies([self.chinese_font, self.english_font, self.symbol_font])
-            font.setHintingPreference(QFont.HintingPreference.PreferFullHinting)
-            font.setStyleStrategy(
-                QFont.StyleStrategy.PreferAntialias | 
-                QFont.StyleStrategy.PreferQuality
-            )
-            font.setKerning(True)
-            font.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 100)
-            font.setWeight(QFont.Weight.Medium)
-            
-            if isinstance(widget, QApplication):
-                widget.setFont(font)
-            else:
-                widget.setFont(font)
-        else:
-            raise TypeError("不支持的类型,只能应用到QWidget或QApplication ")
-
+        
     def apply_subtitle_style(self, widget):
-        """为子标题设置样式喵"""
-        # 先应用基础字体
-        self.apply_font(widget)
-        
-        # 创建子标题专用字体
-        font = widget.font()
-        font.setPointSize(16)  # 子标题大小
-        font.setWeight(QFont.Weight.Medium)  # 设置字重
-        widget.setFont(font)
-        
-        # 设置子标题样式
-        widget.setStyleSheet("""
-            QLabel {
-                color: #4A5568;
-                margin: 5px 0;
-            }
-        """)
-
-    def apply_icon_font(self, widget, size=24):
-        """应用 Material Icons 字体"""
-        try:
-            if isinstance(widget, (QWidget, QLabel, QAction)):
-                icon_font = QFont(self.material_font)
-                icon_font.setPixelSize(size)
-                widget.setFont(icon_font)
-            else:
-                log.warning(f"不支持的控件类型: {type(widget)}")
-                
-        except Exception as e:
-            log.error(f"应用图标字体失败: {str(e)}")
+        if not isinstance(widget, (QWidget, QLabel)):
+            log.warning(f"不支持的控件类型: {type(widget)}")
+            return
             
-    def get_icon_text(self, icon_name):
-        """获取 Material Icons 字体对应的 Unicode 字符"""
-        icon_map = {
-            'home': '',
-            'settings': '',
-            'close': '',
-            'menu': '',
-            'arrow_back': '',
-            'arrow_forward': '',
-            'refresh': '',
-            'search': '',
-            'info': '',
-            'warning': '',
-            'error': '',
-            'success': '',
-            # 可以继续添加更多图标映射
-        }
-        return icon_map.get(icon_name, '')
+        widget.setFont(self.subtitle_font)
+        if isinstance(widget, QLabel):
+            widget.setStyleSheet("color: #666666; background: transparent;")
+
+    def apply_button_style(self, widget):
+        if not isinstance(widget, (QPushButton, Button)):
+            log.warning(f"不支持的控件类型: {type(widget)}")
+            return
+            
+        widget.setFont(self.button_font)
