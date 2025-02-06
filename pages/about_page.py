@@ -1,12 +1,13 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
-                             QHBoxLayout, QPushButton)
-from PySide6.QtCore import Qt, QUrl
+                             QHBoxLayout, QScrollArea)
+from PySide6.QtCore import Qt, QUrl, QTimer
 from PySide6.QtGui import QDesktopServices
-from core.ui.buttons_blue import Button
+from core.ui.button_white import WhiteButton
 from core.font.font_pages_manager import FontPagesManager
-from core.utils.notif import Notification, NotificationType
-from core.animations.notification_ani import NotificationAnimation
+from core.utils.notif import NotificationType
 from core.log.log_manager import log
+from core.ui.scroll_style import ScrollStyle
+from core.animations.scroll_hide_show import ScrollBarAnimation
 
 class AboutPage(QWidget):
     def __init__(self, parent=None):
@@ -15,131 +16,204 @@ class AboutPage(QWidget):
         self.setup_ui()
         
     def setup_ui(self):
+        # 创建主布局
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(40, 40, 40, 40)
-        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
-        # 标题
-        title = QLabel("Clut UI\nNext Generation")
-        title.setStyleSheet("""
-            QLabel {
-                color: #333333;
-                font-size: 36px;
-                font-weight: bold;
-                background: transparent;
-            }
-        """)
+        # 创建一个容器来包裹滚动区域
+        scroll_container = QWidget()
+        scroll_container.setObjectName("scrollContainer")
+        scroll_container_layout = QVBoxLayout(scroll_container)
+        scroll_container_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 设置滚动区域
+        scroll_area = QScrollArea()
+        self.scroll_area = scroll_area
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setObjectName("scrollArea")
+        
+        # 设置滚动条动画
+        self.scroll_animation = ScrollBarAnimation(scroll_area.verticalScrollBar())
+        
+        # 连接滚动条值改变信号
+        scroll_area.verticalScrollBar().valueChanged.connect(
+            self.scroll_animation.show_temporarily
+        )
+        
+        # 内容容器
+        container = QWidget()
+        container.setObjectName("container")
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(40, 60, 40, 60)
+        container_layout.setSpacing(30)
+        
+        # Logo和标题区域
+        title = QLabel("ClutUI\nNext Generation")
+        self.font_manager.apply_title_style(title)
+        title.setStyleSheet("font-size: 42px;")
         title.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(title)
+        container_layout.addWidget(title)
         
-        # 版本信息
-        version = QLabel("Version 0.0.1Alpha")
-        version.setStyleSheet("""
-            QLabel {
-                color: #666666;
-                font-size: 16px;
-                background: transparent;
-            }
-        """)
+        subtitle = QLabel("让您的界面焕然一新")
+        self.font_manager.apply_subtitle_style(subtitle)
+        subtitle.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(subtitle)
+        
+        version = QLabel("Version 0.0.3 Alpha")
+        self.font_manager.apply_small_style(version)
         version.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(version)
+        container_layout.addWidget(version)
         
-        main_layout.addSpacing(30)
+        container_layout.addSpacing(40)
+    
+        main_buttons = QHBoxLayout()
+        main_buttons.setSpacing(20)
         
-        # 按钮区域
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(15)
+        buttons_data = [
+            ("更新日志", "https://github.com/buaoyezz/ClutUI-Nextgen/releases", "history"),
+            ("文档", "https://zzbuaoye.us.kg/clutui/docs/", "article"),
+            ("源代码", "https://github.com/buaoyezz/ClutUI-Nextgen", "code"),
+        ]
         
-        # 检查更新按钮
-        update_btn = Button(text="版本发布页面", style="blue")
-        update_btn.setFixedSize(150, 40)
-        update_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://github.com/buaoyezz/ClutUI-Nextgen/releases")))
-        buttons_layout.addWidget(update_btn)
+        for text, url, icon in buttons_data:
+            btn = WhiteButton(title=text, icon=self.font_manager.get_icon_text(icon))
+            btn.clicked.connect(lambda u=url: QDesktopServices.openUrl(QUrl(u)))
+            main_buttons.addWidget(btn)
         
-        # 官方网站按钮
-        website_btn = Button(text="官方网站", style="blue")
-        website_btn.setFixedSize(150, 40)
-        website_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://zzbuaoye.us.kg")))
-        buttons_layout.addWidget(website_btn)
+        main_buttons.setAlignment(Qt.AlignCenter)
+        container_layout.addLayout(main_buttons)
         
-        # GitHub按钮
-        github_btn = Button(text="GitHub", style="blue")
-        github_btn.setFixedSize(150, 40)
-        github_btn.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://github.com/buaoyezz/ClutUI-Nextgen")))
-        buttons_layout.addWidget(github_btn)
+        container_layout.addSpacing(30)
         
-        # 添加通知按钮
-        notify_btn = Button(text="显示通知", style="blue")
-        notify_btn.setFixedSize(150, 40)
-        notify_btn.clicked.connect(self.show_notification)
-        buttons_layout.addWidget(notify_btn)
+        # 介绍文本
+        intro_text = QLabel(
+            "ClutUI Next Generation 是不基于ClutUI1.0的新一代的UI开发框架\n"
+            "致力于提供简单、高效、美观的界面开发体验"
+        )
+        intro_text.setWordWrap(True)
+        self.font_manager.apply_normal_style(intro_text)
+        intro_text.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(intro_text)
         
-        buttons_layout.setAlignment(Qt.AlignCenter)
-        main_layout.addLayout(buttons_layout)
+        container_layout.addSpacing(40)
         
-        main_layout.addSpacing(40)
-        
-        main_layout.addSpacing(20)
-        
-        # 技术声明
+        # 技术信息
         tech_info = QLabel(
-            "本软件基于 Python 3.12 和 PySide6 开发\n"
-            "界面图标采用 Google Material Design Icons\n"
-            "遵循 Apache License 2.0 协议\n\n"
-            "完整许可声明请在官网查看：\n"
-            "https://zzbuaoye.us.kg/clutui/statement.txt"
+            "基于 Python 3.12 & PySide6\n"
+            "界面设计参考 Material Design 3\n"
+            "字体: HarmonyOS Sans & Mulish\n"
+            "图标: Material Icons\n"
+            "动画: QPropertyAnimation & QEasingCurve\n"
+            "本软件使用的上述字体，请遵守相关协议和限制，不可修改，不可二次分发，其他具体限制范围需要咨询相关部门\n"
+            "详情查看下述按钮相关协议与许可协议"
         )
         tech_info.setWordWrap(True)
-        tech_info.setStyleSheet("""
-            QLabel {
-                color: #666666;
-                font-size: 13px;
-                line-height: 22px;
-                background: transparent;
-            }
-        """)
+        self.font_manager.apply_small_style(tech_info)
         tech_info.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(tech_info)
+        container_layout.addWidget(tech_info)
         
-        main_layout.addSpacing(10)
+        container_layout.addSpacing(20)
+        
+        # 法律信息按钮
+        legal_buttons = QHBoxLayout()
+        legal_buttons.setSpacing(15)
+        
+        legal_data = [
+            ("许可协议", "https://zzbuaoye.us.kg/clutui/font/license.txt", "gavel"),
+            ("相关协议", "https://zzbuaoye.us.kg/clutui/statement.txt", "shield"),
+        ]
+        
+        for text, url, icon in legal_data:
+            btn = WhiteButton(title=text, icon=self.font_manager.get_icon_text(icon))
+            btn.setFixedWidth(120)
+            btn.clicked.connect(lambda u=url: QDesktopServices.openUrl(QUrl(u)))
+            legal_buttons.addWidget(btn)
+        
+        legal_buttons.setAlignment(Qt.AlignCenter)
+        container_layout.addLayout(legal_buttons)
+        
+        container_layout.addSpacing(30)
         
         # 版权信息
-        copyright = QLabel("© 2024 ClutUI Nextgen. By ZZBuAoYe All rights reserved.")
-        copyright.setStyleSheet("""
-            QLabel {
-                color: #999999;
-                font-size: 12px;
-                background: transparent;
-            }
-        """)
+        copyright = QLabel("© 2025 ClutUI Next Generation. All rights reserved.")
+        self.font_manager.apply_small_style(copyright)
         copyright.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(copyright)
+        container_layout.addWidget(copyright)
         
-        # 使用 addStretch 让内容居中显示
-        main_layout.addStretch()
+        container_layout.addStretch()
         
-        # 设置背景颜色
-        self.setStyleSheet("""
-            QWidget {
-                background: #F8F9FA;
-            }
+        # 设置滚动区域的内容
+        scroll_area.setWidget(container)
+        scroll_container_layout.addWidget(scroll_area)
+        
+        # 将滚动容器添加到主布局
+        main_layout.addWidget(scroll_container)
+        
+        # 更新样式表
+        self.setStyleSheet(f"""
+            QWidget#scrollContainer {{
+                background: transparent;
+                margin: 0px 20px;
+            }}
+            
+            QScrollArea#scrollArea {{
+                background: transparent;
+                border: none;
+            }}
+            
+            QWidget#container {{
+                background: transparent;
+            }}
+            
+            QLabel {{
+                color: #1F2937;
+                background: transparent;
+            }}
+            
+            /* 自定义滚动条样式 */
+            QScrollBar:vertical {{
+                background: transparent;
+                width: 8px;
+                margin: 4px 4px 4px 4px;
+            }}
+            
+            QScrollBar::handle:vertical {{
+                background: #C0C0C0;
+                border-radius: 4px;
+                min-height: 30px;
+            }}
+            
+            QScrollBar::handle:vertical:hover {{
+                background: #A0A0A0;
+            }}
+            
+            QScrollBar::add-line:vertical {{
+                height: 0px;
+            }}
+            
+            QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+            
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: transparent;
+            }}
         """)
+
     def show_notification(self):
         try:
-            # 获取主窗口实例
             main_window = self.window()
             if main_window:
                 main_window.show_notification(
-                    text="ClutUI Nextgen Created A New Notification",
+                    text="欢迎使用 ClutUI Next Generation",
                     type=NotificationType.TIPS,
-                    duration=3000
+                    duration=1000
                 )
-                log.debug("关于页面欢迎通知已触发")
+                log.debug("显示欢迎通知")
             else:
-                log.error("无法获取主窗口实例")
-            
+                log.error("未找到主窗口实例")
         except Exception as e:
-            log.error(f"弹出通知时遇到问题: {str(e)}")
+            log.error(f"显示通知出错: {str(e)}")
