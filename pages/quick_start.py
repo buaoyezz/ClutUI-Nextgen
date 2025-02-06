@@ -7,6 +7,7 @@ from core.ui.buttons_blue import Button
 from core.log.log_manager import log
 from core.ui.little_card import LittleCard
 from core.utils.notif import Notification, NotificationType
+from core.font.font_pages_manager import FontPagesManager
 class InfoCard(QFrame):
     clicked = Signal(str)
     
@@ -22,32 +23,31 @@ class InfoCard(QFrame):
         
         # 标题
         title_label = QLabel(self.title)
+        self.font_manager = FontPagesManager()  # 添加字体管理器
+        self.font_manager.apply_font(title_label, "title")  # 应用普通字体
         title_label.setStyleSheet("""
             QLabel {
                 color: #333333;
-                font-size: 16px;
-                font-weight: bold;
                 background: transparent;
             }
         """)
         
         # 主要信息显示
         self.info_label = QLabel("")
+        self.font_manager.apply_font(self.info_label, "title")  # 应用标题字体
         self.info_label.setStyleSheet("""
             QLabel {
                 color: #2196F3;
-                font-size: 24px;
-                font-weight: bold;
                 background: transparent;
             }
         """)
         
         # 次要信息显示
         self.sub_info_label = QLabel("Open Link➡")
+        self.font_manager.apply_font(self.sub_info_label, "small")  # 应用小字体
         self.sub_info_label.setStyleSheet("""
             QLabel {
                 color: #666666;
-                font-size: 12px;
                 background: transparent;
             }
         """)
@@ -92,6 +92,7 @@ class QuickStartPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.info_cards = {}
+        self.font_manager = FontPagesManager()  # 添加字体管理器
         self.setup_ui()
         
     def setup_ui(self):
@@ -101,25 +102,22 @@ class QuickStartPage(QWidget):
         
         # 顶部标题
         main_title = QLabel("ClutUI Nextgen")
+        self.font_manager.apply_font(main_title, "title")  # 应用标题字体
         main_title.setStyleSheet("""
             QLabel {
                 color: rgba(51, 51, 51, 0.85); 
-                font-size: 42px;
-                font-weight: bold;
                 letter-spacing: 1px;
             }
         """)
         main_title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(main_title)
         
-        
         # 说明文本
         description = QLabel("")
+        self.font_manager.apply_font(description, "normal")  # 应用普通字体
         description.setStyleSheet("""
             QLabel {
                 color: rgba(102, 102, 102, 0.85);
-                font-size: 16px;
-                letter-spacing: 0.3px;
                 line-height: 24px;
             }
         """)
@@ -186,15 +184,12 @@ class QuickStartPage(QWidget):
             QDesktopServices.openUrl(url)
             log.info(f"打开链接: {urls[category]}")
             
-            # 使用主窗口的通知方法
-            if self.window():
-                self.window().show_notification(
-                    text=f"正在打开 {category}  ",
-                    type=NotificationType.TIPS,
-                    duration=3000
-                )
-        else:
-            QMessageBox.warning(self, "提示", "无效的链接")
+            # 添加通知
+            Notification(
+                text=f"正在打开 {category} 链接",
+                type=NotificationType.TIPS,
+                duration=1000
+            ).show_notification()
             
     def switch_page(self, page_name):
         self.switch_page_requested.emit(page_name)
