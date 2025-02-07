@@ -1,11 +1,12 @@
 from PySide6.QtGui import QFont, QFontDatabase, QColor
 from PySide6.QtWidgets import QWidget, QApplication, QLabel, QPushButton
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread, Signal
 import platform
 import re
 import os
 import sys
 from core.log.log_manager import log
+from .icon_map import ICON_MAP
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
@@ -16,92 +17,78 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+class FontLoaderThread(QThread):
+    finished = Signal(list)
+    
+    def __init__(self, fonts_to_load):
+        super().__init__()
+        self.fonts_to_load = fonts_to_load
+        
+    def run(self):
+        font_db = QFontDatabase()
+        loaded_fonts = []
+        
+        for font_path, font_name in self.fonts_to_load:
+            if os.path.exists(font_path):
+                font_id = font_db.addApplicationFont(font_path)
+                if font_id >= 0:
+                    loaded_fonts.append(font_name)
+        
+        self.finished.emit(loaded_fonts)
+
 class FontManager:
+    _instance = None
+    _initialized = False
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(FontManager, cls).__new__(cls)
+        return cls._instance
+    
     def __init__(self):
+        if not FontManager._initialized:
+            self._init_basic_fonts()
+            self._start_async_font_loading()
+            FontManager._initialized = True
+    
+    def _init_basic_fonts(self):
+        # 基础字体配置
         self.hmsans_fonts = "HarmonyOS_Sans_SC"
         self.hmsans_fonts_bold = "HarmonyOS_Sans_SC_Bold"
         self.mulish_font = "Mulish"
         self.mulish_bold = "Mulish-Bold"
         self.material_font = "Material Icons"
         
-        # 使用 resource_path 获取字体文件路径
+        # 获取字体路径
         self.icon_font_path = resource_path(os.path.join("core", "font", "icons", "MaterialIcons-Regular.ttf"))
         self.hmsans_font_path = resource_path(os.path.join("core", "font", "font", "HarmonyOS_Sans_SC_Regular.ttf"))
         self.hmsans_bold_path = resource_path(os.path.join("core", "font", "font", "HarmonyOS_Sans_SC_Bold.ttf"))
         self.mulish_font_path = resource_path(os.path.join("core", "font", "font", "Mulish-Regular.ttf"))
         self.mulish_bold_path = resource_path(os.path.join("core", "font", "font", "Mulish-Bold.ttf"))
         
-        # 加载字体文件
-        self._load_fonts()
-        self._init_fonts()
-        
-    def _load_fonts(self):
+        # 先加载图标字体，因为这个是必需的
         font_db = QFontDatabase()
-        
-        # 先加载 Mulish 字体
-        if os.path.exists(self.mulish_font_path):
-            mulish_id = font_db.addApplicationFont(self.mulish_font_path)
-            if mulish_id < 0:
-                log.error("Mulish 常规字体加载失败")
-                return
-        
-        if os.path.exists(self.mulish_bold_path):
-            mulish_bold_id = font_db.addApplicationFont(self.mulish_bold_path)
-            if mulish_bold_id < 0:
-                log.error("Mulish Bold字体加载失败")
-                return
-                
-        # 加载其他字体
-        if os.path.exists(self.hmsans_font_path):
-            hmsans_id = font_db.addApplicationFont(self.hmsans_font_path)
-            if hmsans_id < 0:
-                log.error("HarmonyOS_Sans_SC 常规字体加载失败")
-                
-        if os.path.exists(self.hmsans_bold_path):
-            hmsans_bold_id = font_db.addApplicationFont(self.hmsans_bold_path)
-            if hmsans_bold_id < 0:
-                log.error("HarmonyOS_Sans_SC Bold字体加载失败")
-                
         if os.path.exists(self.icon_font_path):
-            icon_id = font_db.addApplicationFont(self.icon_font_path)
-            if icon_id < 0:
-                log.error("Material Icons 字体加载失败")
+            font_id = font_db.addApplicationFont(self.icon_font_path)
+            if font_id >= 0:
+                log.info("加载图标字体成功")
+    
+    def _start_async_font_loading(self):
+        fonts_to_load = [
+            (self.mulish_font_path, "Mulish Regular"),
+            (self.mulish_bold_path, "Mulish Bold"), 
+            (self.hmsans_font_path, "HarmonyOS Sans SC Regular"),
+            (self.hmsans_bold_path, "HarmonyOS Sans SC Bold"),
+        ]
+        
+        self.font_loader = FontLoaderThread(fonts_to_load)
+        self.font_loader.finished.connect(self._on_fonts_loaded)
+        self.font_loader.start()
+    
+    def _on_fonts_loaded(self, loaded_fonts):
+        if loaded_fonts:
+            log.info(f"异步加载字体完成: {', '.join(loaded_fonts)}")
 
-    def _init_fonts(self):
-        # 获取系统类型
-        system = platform.system()
-        
-        # 使用新的推荐方式创建 QFontDatabase
-        font_db = QFontDatabase
-        
-        # 加载所有字体
-        icon_font_id = QFontDatabase.addApplicationFont(self.icon_font_path)
-        if icon_font_id < 0:
-            log.warning("Material Icons 字体加载失败")
-            
-        hmsans_font_id = QFontDatabase.addApplicationFont(self.hmsans_font_path)
-        if hmsans_font_id < 0:
-            log.warning("HarmonyOS_Sans_SC 字体加载失败")
-        
-        hmsans_bold_id = QFontDatabase.addApplicationFont(self.hmsans_bold_path)
-        if hmsans_bold_id < 0:
-            log.warning("HarmonyOS_Sans_SC Bold 字体加载失败")
-        
-        mulish_font_id = QFontDatabase.addApplicationFont(self.mulish_font_path)
-        if mulish_font_id < 0:
-            log.warning("Mulish 字体加载失败")
-        
-        mulish_bold_id = QFontDatabase.addApplicationFont(self.mulish_bold_path)
-        if mulish_bold_id < 0:
-            log.warning("Mulish Bold 字体加载失败")
-
-        available_fonts = font_db.families()
-        
-        if self.hmsans_fonts not in available_fonts:
-            self.hmsans_fonts = "HarmonyOS_Sans_SC"  # 思源黑体,开源免费商用
-        if self.mulish_font not in available_fonts:
-            self.mulish_font = "Roboto"  # Roboto字体,开源免费商用
-        
     def _get_background_color(self, widget):
         # QApplication 默认使用亮色主题
         if isinstance(widget, QApplication):
@@ -180,33 +167,7 @@ class FontManager:
         return font
 
     def get_icon_text(self, icon_name):
-        # 统一图标映射
-        icon_map = {
-            'home': '\ue88a',
-            'settings': '\ue8b8',
-            'close': '\ue5cd',
-            'menu': '\ue5d2',
-            'arrow_back': '\ue5c4',
-            'arrow_forward': '\ue5c8',
-            'refresh': '\ue5d5',
-            'search': '\ue8b6',
-            'info': '\ue88e',
-            'warning': '\ue002',
-            'error': '\ue000',
-            'success': '\ue86c',
-            'article': '\uef42',
-            'history': '\ue889',
-            'code': '\ue86f',
-            'gavel': '\ue90e',
-            'shield': '\ue9e9',
-            'dashboard': '\ue871',
-            'person': '\ue7fd',
-            'folder': '\ue2c7',
-            'description': '\ue873',
-            'bug_report': '\ue868',
-            'build': '\ue869',
-        }
-        return icon_map.get(icon_name, '')
+        return ICON_MAP.get(icon_name, '')
 
     def apply_font(self, widget):
         if isinstance(widget, (QWidget, QApplication)):
