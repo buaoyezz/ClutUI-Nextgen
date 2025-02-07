@@ -9,6 +9,8 @@ from core.log.log_manager import log
 from core.font.font_manager import FontManager
 from core.font.font_pages_manager import FontPagesManager
 from core.animations.animation_pagemanager import PageAnimationManager
+from pages.example_page import ExamplePage
+
 
 class PagesManager:
     def __init__(self):
@@ -22,13 +24,16 @@ class PagesManager:
         self.animation_manager = AnimationManager()
         self.page_animation_manager = PageAnimationManager()
         
-        # 创建字体管理器
+        # 创建字体管理器 (现在会使用单例模式)
         self.font_manager = FontManager()
         self.font_pages_manager = FontPagesManager()
+        
         # 创建页面实例
         self.quick_start_page = QuickStartPage()
         self.about_page = AboutPage()
         self.log_page = LogPage()
+        self.example_page = ExamplePage()
+        #self.settings_page = SettingsPage()
         # 初始化侧边栏
         self.sidebar = QWidget()
         self.sidebar_layout = QVBoxLayout(self.sidebar)
@@ -38,19 +43,21 @@ class PagesManager:
         # 使用字体管理器获取图标映射
         self.icons = {
             "快速开始": self.font_manager.get_icon_text('dashboard'),
+            "示例": self.font_manager.get_icon_text('auto_awesome'),
             "日志": self.font_manager.get_icon_text('article'),
-            "关于": self.font_manager.get_icon_text('info')
+            "关于": self.font_manager.get_icon_text('info'),
+            #"设置": self.font_manager.get_icon_text('settings')
         }
         
         # 创建并存储按钮
         self.buttons = {
-            "快速开始": self.create_sidebar_button("快速开始"),
-            "日志": self.create_sidebar_button("日志"),
-            "关于": self.create_sidebar_button("关于")
+            name: self.create_sidebar_button(name)
+            for name in ["快速开始", "示例", "日志", "关于"]
         }
         
         # 添加按钮到布局
         self.sidebar_layout.addWidget(self.buttons["快速开始"])
+        self.sidebar_layout.addWidget(self.buttons["示例"])
         self.sidebar_layout.addStretch(1)
         self.sidebar_layout.addWidget(self.buttons["日志"])
         self.sidebar_layout.addWidget(self.buttons["关于"])
@@ -58,8 +65,10 @@ class PagesManager:
         # 添加页面映射
         self.pages = {
             "快速开始": self.quick_start_page,
+            "示例": self.example_page,
             "日志": self.log_page,
-            "关于": self.about_page
+            "关于": self.about_page,
+            #"设置": self.settings_page
         }
         
         # 将页面添加到堆叠窗口
@@ -94,11 +103,9 @@ class PagesManager:
             layout.addWidget(icon_label)
         
         text_label = QLabel(text)
-        # 设置字体
         default_font = self.font_pages_manager.setFont("HarmonyOS Sans SC", size=14)
         text_label.setFont(default_font)
-        log.info(f"PagesManager设置字体: {default_font.family()}")
-            
+        
         text_label.setStyleSheet("""
             QLabel {
                 color: #333333;
