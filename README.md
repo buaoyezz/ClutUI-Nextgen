@@ -68,14 +68,22 @@
 
 ## 📦 打包指南
 - 先安装PyInstaller最新版
+```batch
+REM 更新pip
+pip install --upgrade pip
+REM 安装PyInstaller
+pip install Pyinstaller 
+REM 更新PyInstaller
+pip install --upgrade pyinstaller
+```
 - 然后使用PyInstaller打包
 - 指令如下请在ClutUI_Nextgen_Main.py同级目录下执行
-```python
-# 0.0.2 版本适配
+```batch
+REM 0.0.2 版本适配
 pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" --add-data="MaterialIcons-Regular.ttf;." --add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" --add-data="config;config" --add-data="core;core" --add-data="pages;pages" --add-data="preview;preview" --name="ClutUI_Nextgen" ClutUI_Nextgen_Main.py
 ```
-```python
-# 0.0.3 版本适配
+```batch
+REM 0.0.3 版本适配
 pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" ^
 --add-data="MaterialIcons-Regular.ttf;." ^
 --add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" ^
@@ -90,7 +98,32 @@ pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" ^
 --name="ClutUI_Nextgen" ^
 ClutUI_Nextgen_Main.py
 ```
+```batch
+REM 0.0.4 版本适配
+pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" ^
+--add-data="MaterialIcons-Regular.ttf;." ^
+--add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" ^
+--add-data="core/font/icons/codepoints;core/font/icons" ^
+--add-data="core/font/font/HarmonyOS_Sans_SC_Bold.ttf;core/font/font" ^
+--add-data="core/font/font/HarmonyOS_Sans_SC_Regular.ttf;core/font/font" ^
+--add-data="core/font/font/Mulish-Bold.ttf;core/font/font" ^
+--add-data="core/font/font/Mulish-Regular.ttf;core/font/font" ^
+--add-data="config;config" ^
+--add-data="core;core" ^
+--add-data="pages;pages" ^
+--add-data="preview;preview" ^
+--name="ClutUI_Nextgen" ^
+ClutUI_Nextgen_Main.py
+```
 - 打包后运行`dist`下的`ClutUI_Nextgen_Main.exe`即可
+
+## 📦 Icons Map
+- 预先打开`core` -> `font`目录
+- 然后请先使用`download_codepoints.py`来下载`codepoints`文件
+- 在然后使用`generate_icon_map.py`来生成`icon_map.py`文件
+- Tips: 请不要手动修改`icon_map.py`内的内容，否则会导致图标无法显示，除非你知道你在做什么
+> 当然你可以选择直接使用我预先生成的`icon_map.py`文件，他是原版的我并没有修改任何内容
+
 
 ## ✨ 对比1.0 / NextGen提升了什么
 > 1.0特性
@@ -116,4 +149,45 @@ ClutUI_Nextgen_Main.py
 ## 🍞 END
 - 感谢您的使用和支持，祝您开发愉快！
 - Update 2025-02-04 17:45:02 (UTC+8)
+
+# ClutUI-Nextgen 字体使用说明
+
+## 使用的字体
+1. HarmonyOS Sans SC (Regular & Bold)
+   - 版权所有 © 2021-2024 华为技术有限公司
+   - 商用授权协议：[华为鸿蒙字体商用授权协议](https://developer.harmonyos.com/cn/harmonyos_design)
+   - 使用限制：不可修改，不可二次分发
+
+2. Mulish (Regular & Bold)
+   - 设计：Vernon Adams, Cyreal
+   - 基于 SIL Open Font License 1.1
+   - 许可协议：[SIL OFL 1.1](https://scripts.sil.org/OFL)
+   - 使用限制：不可修改，不可二次分发
+
+3. Material Icons
+   - 版权所有 © 2014-2024 Google LLC
+   - 基于 Apache License 2.0
+   - 许可协议：[Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+   - 使用限制：不可修改，不可二次分发
+
+## 项目许可
+- ClutUI-Nextgen：MIT License © 2025 ZZBuAoYe
+- PySide6：LGPL-3.0 License © Qt Company
+
+## 重要说明
+1. 本项目虽采用 MIT 协议，但使用的字体和框架有各自的授权要求
+2. PySide6 的使用需遵守 Qt 公司的协议
+3. 字体的使用需严格遵守各自的授权协议
+
+## 相关链接
+- 项目主页：https://github.com/buaoyezz/ClutUI-Nextgen
+- 许可协议：https://zzbuaoye.us.kg/clutui/font/license.txt
+- 相关声明：https://zzbuaoye.us.kg/clutui/statement.txt
+
+## 联系方式
+如有任何授权相关问题，请联系：
+- Email: zzbuaoye@gmail.com
+- Website: https://zzbuaoye.us.kg
+
+注意：其他具体限制范围请咨询相关部门，若字体使用协议有变更，请及时通知我使用邮箱
 
