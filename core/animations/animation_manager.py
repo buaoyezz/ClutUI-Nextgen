@@ -8,8 +8,8 @@
 """
 
 
-from PySide6.QtCore import QObject, QPropertyAnimation, QParallelAnimationGroup, QEasingCurve, QPoint
-from PySide6.QtWidgets import QWidget
+from PySide6.QtCore import QObject, QPropertyAnimation, QParallelAnimationGroup, QEasingCurve, QPoint, Qt
+from PySide6.QtWidgets import QWidget, QStackedWidget
 from core.log.log_manager import log
 
 class AnimationManager(QObject):
@@ -17,6 +17,7 @@ class AnimationManager(QObject):
         super().__init__()
         self.current_animations = []
         self.animation_running = False
+        self.current_animation = None
         
     def create_page_switch_animation(self, current_page: QWidget, next_page: QWidget, direction: str = "right") -> None:
         if not current_page or not next_page:
@@ -135,3 +136,91 @@ class AnimationManager(QObject):
             if hasattr(self, 'next_page'):
                 delattr(self, 'next_page')
             log.debug("页面切换动画完成")
+
+    def create_smooth_page_switch_animation(self, current_page, next_page, direction, duration=300, easing_curve=QEasingCurve.OutCubic):
+        if self.current_animation and self.current_animation.state() == QPropertyAnimation.Running:
+            self.current_animation.stop()
+            self._cleanup_animation(current_page, next_page)
+            
+        # 获取父级QStackedWidget
+        stacked_widget = current_page.parent()
+        if not isinstance(stacked_widget, QStackedWidget):
+            return
+            
+        # 重要：确保所有其他页面都隐藏
+        for i in range(stacked_widget.count()):
+            page = stacked_widget.widget(i)
+            if page not in (current_page, next_page):
+                page.hide()
+            
+        # 设置页面层级关系
+        next_page.stackUnder(current_page)
+        
+        # 设置WA_TranslucentBackground以支持叠加
+        current_page.setAttribute(Qt.WA_TranslucentBackground)
+        next_page.setAttribute(Qt.WA_TranslucentBackground)
+        
+        # 确保两个页面都可见并正确定位
+        current_page.show()
+        next_page.show()
+        next_page.raise_()
+        
+        # 获取页面尺寸
+        width = stacked_widget.width()
+        
+        # 设置初始位置
+        current_page.move(0, 0)
+        if direction == "left":
+            next_page.move(width, 0)
+        else:
+            next_page.move(-width, 0)
+            
+        # 创建动画组
+        animation_group = QParallelAnimationGroup()
+        
+        # 当前页面动画
+        current_anim = QPropertyAnimation(current_page, b"pos")
+        current_anim.setDuration(duration)
+        current_anim.setStartValue(QPoint(0, 0))
+        current_anim.setEndValue(QPoint(-width if direction == "left" else width, 0))
+        current_anim.setEasingCurve(easing_curve)
+        
+        # 下一页面动画
+        next_anim = QPropertyAnimation(next_page, b"pos")
+        next_anim.setDuration(duration)
+        next_anim.setStartValue(next_page.pos())
+        next_anim.setEndValue(QPoint(0, 0))
+        next_anim.setEasingCurve(easing_curve)
+        
+        animation_group.addAnimation(current_anim)
+        animation_group.addAnimation(next_anim)
+        
+        # 动画完成后的清理
+        animation_group.finished.connect(
+            lambda: self._cleanup_animation(current_page, next_page)
+        )
+        
+        self.current_animation = animation_group
+        animation_group.start()
+        
+    def _cleanup_animation(self, current_page, next_page):
+        # 重要：确保其他页面状态正确
+        stacked_widget = current_page.parent()
+        if isinstance(stacked_widget, QStackedWidget):
+            for i in range(stacked_widget.count()):
+                page = stacked_widget.widget(i)
+                if page == next_page:
+                    page.show()
+                    page.raise_()
+                else:
+                    page.hide()
+        
+        # 重置页面状态
+        current_page.hide()
+        next_page.show()
+        current_page.move(0, 0)
+        next_page.move(0, 0)
+        
+        # 移除透明属性
+        current_page.setAttribute(Qt.WA_TranslucentBackground, False)
+        next_page.setAttribute(Qt.WA_TranslucentBackground, False)
