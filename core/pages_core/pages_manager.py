@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QStackedWidget, QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QLabel
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEasingCurve
 from PySide6.QtGui import QFont, QFontDatabase
 from pages.quick_start import QuickStartPage
 from pages.about_page import AboutPage
@@ -160,19 +160,24 @@ class PagesManager:
         log.info(f"添加页面: {name}")
         
     def switch_page(self, name):
-        # 检查页面是否存在
         if name not in self.pages:
             log.error(f"页面 {name} 不存在")
             return
         
-        # 创建按钮点击动画
-        self.page_animation_manager.create_button_click_animation(self.buttons[name])
-        
-        # 检查是否正在切换到当前页面
         if name == self.current_page:
             log.debug(f"已经在 {name} 页面，无需切换")
             self.buttons[name].setChecked(True)
             return
+        
+        # 重要：切换前确保所有页面状态正确
+        for page_name, page in self.pages.items():
+            if page_name == name or page_name == self.current_page:
+                page.show()
+            else:
+                page.hide()
+        
+        # 创建按钮点击动画
+        self.page_animation_manager.create_button_click_animation(self.buttons[name])
         
         log.info(f"切换到页面: {name}")
         
@@ -190,13 +195,26 @@ class PagesManager:
         # 根据页面索引决定动画方向
         current_index = list(self.pages.keys()).index(self.current_page)
         next_index = list(self.pages.keys()).index(name)
-        direction = "right" if next_index > current_index else "left"
         
-        # 创建并执行动画
-        self.animation_manager.create_page_switch_animation(
-            current_page,
-            next_page,
-            direction
+        # 优化动画方向判断
+        if current_index < next_index:
+            direction = "left"  # 向左滑出，新页面从右边进入
+            offset = self.stacked_widget.width()
+        else:
+            direction = "right"  # 向右滑出，新页面从左边进入
+            offset = -self.stacked_widget.width()
+            
+        # 预先设置新页面的初始位置
+        next_page.show()
+        next_page.setGeometry(current_page.geometry())
+        
+        # 创建平滑的滑动动画
+        self.animation_manager.create_smooth_page_switch_animation(
+            current_page=current_page,
+            next_page=next_page,
+            direction=direction,
+            duration=300,  # 动画持续时间(毫秒)
+            easing_curve=QEasingCurve.OutCubic  # 使用缓动曲线让动画更自然
         )
         
         self.current_page = name

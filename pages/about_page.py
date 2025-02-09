@@ -1,13 +1,15 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                              QHBoxLayout, QScrollArea)
 from PySide6.QtCore import Qt, QUrl, QTimer
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QDesktopServices, QPixmap
 from core.ui.button_white import WhiteButton
 from core.font.font_pages_manager import FontPagesManager
 from core.utils.notif import NotificationType
 from core.log.log_manager import log
 from core.ui.scroll_style import ScrollStyle
 from core.animations.scroll_hide_show import ScrollBarAnimation
+from core.font.font_manager import resource_path
+import os
 
 class AboutPage(QWidget):
     def __init__(self, parent=None):
@@ -51,18 +53,20 @@ class AboutPage(QWidget):
         container_layout.setSpacing(30)
         
         # Logo和标题区域
-        title = QLabel("ClutUI\nNext Generation")
-        self.font_manager.apply_title_style(title)
-        title.setStyleSheet("font-size: 42px;")
-        title.setAlignment(Qt.AlignCenter)
-        container_layout.addWidget(title)
+        logo_label = QLabel()
+        logo_path = resource_path(os.path.join("resources", "logo2.png"))
+        logo_pixmap = QPixmap(logo_path)
+        scaled_pixmap = logo_pixmap.scaled(400, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        logo_label.setPixmap(scaled_pixmap)
+        logo_label.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(logo_label)
         
-        subtitle = QLabel("让您的界面焕然一新")
+        subtitle = QLabel("Next Generation")
         self.font_manager.apply_subtitle_style(subtitle)
         subtitle.setAlignment(Qt.AlignCenter)
         container_layout.addWidget(subtitle)
         
-        version = QLabel("Version 0.0.4 Alpha")
+        version = QLabel("Version 0.0.5 Alpha")
         self.font_manager.apply_small_style(version)
         version.setAlignment(Qt.AlignCenter)
         container_layout.addWidget(version)

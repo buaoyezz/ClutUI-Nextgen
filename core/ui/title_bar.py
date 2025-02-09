@@ -1,8 +1,17 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QLabel, QApplication
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QPixmap
+import os
+import sys
 from core.font.font_manager import FontManager
 from core.log.log_manager import log
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class TitleBar(QWidget):
     def __init__(self, parent=None):
@@ -13,18 +22,38 @@ class TitleBar(QWidget):
         layout.setContentsMargins(10, 0, 10, 0)
         layout.setSpacing(0)
         
+        # 添加logo
+        self.logo_label = QLabel()
+        try:
+            logo_path = resource_path("resources/logo.png")
+            logo_pixmap = QPixmap(logo_path)
+            if logo_pixmap.isNull():
+                log.error(f"无法加载logo图片: {logo_path}")
+            else:
+                # 调整logo尺寸为20x20
+                scaled_pixmap = logo_pixmap.scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.logo_label.setPixmap(scaled_pixmap)
+                self.logo_label.setFixedSize(20, 20)
+                log.info(f"成功加载logo: {logo_path}")
+        except Exception as e:
+            log.error(f"加载logo时出错: {str(e)}")
+            
+        layout.addWidget(self.logo_label)
+        
+        # 减小logo和标题之间的间距
+        layout.addSpacing(2)
+        
         # 创建字体管理器
         self.font_manager = FontManager()
         log.info("初始化标题栏字体管理器")
         
-        # 设置背景色和高度
+        # 设置背景色和高度，移除底部边框
         self.setFixedHeight(40)
         self.setStyleSheet("""
             QWidget {
                 background: transparent;
                 border-top-left-radius: 10px;
                 border-top-right-radius: 10px;
-                border-bottom: 1px solid #E0E0E0;
             }
             QPushButton {
                 background: transparent;
@@ -51,7 +80,7 @@ class TitleBar(QWidget):
                 background: transparent;
                 color: #333333;
                 font-weight: bold;
-                padding: 0 5px;
+                padding: 0;
             }
         """)
         
@@ -94,7 +123,8 @@ class TitleBar(QWidget):
         self.close_button.setStyleSheet(btn_style)
         self.close_button.setObjectName("closeButton")
         
-        # 添加到布局
+        # 在添加标题文本之前添加一些间距
+        layout.addSpacing(5)
         layout.addWidget(self.title_label)
         layout.addStretch()
         layout.addWidget(self.min_button)
