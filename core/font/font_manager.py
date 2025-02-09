@@ -7,6 +7,7 @@ import os
 import sys
 from core.log.log_manager import log
 from .icon_map import ICON_MAP
+from core.thread.thread_manager import thread_manager
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
@@ -18,7 +19,8 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 class FontLoaderThread(QThread):
-    finished = Signal(list)
+    finished = Signal(dict)  # 修改为返回字典，包含更多信息
+    progress = Signal(str, int)  # 添加进度百分比
     
     def __init__(self, fonts_to_load):
         super().__init__()
@@ -26,14 +28,53 @@ class FontLoaderThread(QThread):
         
     def run(self):
         font_db = QFontDatabase()
-        loaded_fonts = []
+        loaded_fonts = {}
+        total = len(self.fonts_to_load)
         
-        for font_path, font_name in self.fonts_to_load:
-            if os.path.exists(font_path):
-                font_id = font_db.addApplicationFont(font_path)
-                if font_id >= 0:
-                    loaded_fonts.append(font_name)
-        
+        def load_single_font(font_path, font_name):
+            try:
+                if os.path.exists(font_path):
+                    font_id = font_db.addApplicationFont(font_path)
+                    if font_id >= 0:
+                        return {
+                            'success': True,
+                            'name': font_name,
+                            'id': font_id,
+                            'families': font_db.applicationFontFamilies(font_id)
+                        }
+                return {'success': False, 'name': font_name, 'error': '字体文件不存在'}
+            except Exception as e:
+                return {'success': False, 'name': font_name, 'error': str(e)}
+
+        # 创建任务列表
+        tasks = {}
+        for i, (font_path, font_name) in enumerate(self.fonts_to_load):
+            task_id = f"font_load_{font_name}_{i}"
+            future = thread_manager.submit_task(
+                task_id,
+                load_single_font,
+                font_path,
+                font_name
+            )
+            tasks[task_id] = (future, font_name)
+            self.progress.emit(f"提交字体加载任务: {font_name}", int((i + 1) * 50 / total))
+
+        # 收集结果
+        for i, (task_id, (future, font_name)) in enumerate(tasks.items()):
+            try:
+                result = future.result(timeout=3)  # 3秒超时
+                loaded_fonts[font_name] = result
+                self.progress.emit(
+                    f"完成字体加载: {font_name}", 
+                    int(50 + (i + 1) * 50 / total)
+                )
+            except Exception as e:
+                loaded_fonts[font_name] = {
+                    'success': False,
+                    'name': font_name,
+                    'error': f'加载超时: {str(e)}'
+                }
+                
         self.finished.emit(loaded_fonts)
 
 class FontManager:
@@ -82,12 +123,29 @@ class FontManager:
         ]
         
         self.font_loader = FontLoaderThread(fonts_to_load)
+        self.font_loader.progress.connect(self._on_font_progress)
         self.font_loader.finished.connect(self._on_fonts_loaded)
-        self.font_loader.start()
+        
+        # 使用线程管理器启动加载
+        thread_manager.submit_task(
+            "font_loading_main",
+            self.font_loader.run
+        )
     
-    def _on_fonts_loaded(self, loaded_fonts):
-        if loaded_fonts:
-            log.info(f"异步加载字体完成: {', '.join(loaded_fonts)}")
+    def _on_font_progress(self, message: str, percent: int):
+        log.debug(f"字体加载进度 {percent}%: {message}")
+    
+    def _on_fonts_loaded(self, results: dict):
+        success_fonts = []
+        for font_name, result in results.items():
+            if result['success']:
+                success_fonts.append(font_name)
+                log.info(f"字体加载成功: {font_name}")
+            else:
+                log.error(f"字体加载失败 {font_name}: {result.get('error', '未知错误')}")
+        
+        if success_fonts:
+            log.info(f"字体加载完成: {', '.join(success_fonts)}")
 
     def _get_background_color(self, widget):
         # QApplication 默认使用亮色主题

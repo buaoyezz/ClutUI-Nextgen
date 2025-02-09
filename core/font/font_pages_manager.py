@@ -2,13 +2,14 @@
 
 from PySide6.QtGui import QFont, QFontDatabase, QAction
 from PySide6.QtWidgets import QWidget, QApplication, QLabel, QPushButton
-from core.ui.buttons_blue import Button  # 从我们自己的模块导入 Button
+from core.ui.buttons_blue import Button 
 from PySide6.QtCore import Qt
 import platform
 from core.log.log_manager import log
 import os
 import sys
 from core.font.font_manager import FontManager
+from core.thread.thread_manager import thread_manager
 
 def resource_path(relative_path):
     base_path = sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.path.abspath(".")
@@ -53,18 +54,66 @@ class FontPagesManager:
         font_db = QFontDatabase()
         loaded_fonts = set()
         
+        def load_single_font(font_name, path):
+            try:
+                if os.path.exists(path):
+                    font_id = font_db.addApplicationFont(path)
+                    if font_id >= 0:
+                        families = font_db.applicationFontFamilies(font_id)
+                        if families:
+                            return {
+                                'success': True,
+                                'family': families[0],
+                                'id': font_id
+                            }
+                return {'success': False, 'error': '字体文件不存在'}
+            except Exception as e:
+                return {'success': False, 'error': str(e)}
+        
+        # 批量提交任务
+        tasks = {}
+        batch_size = 4  # 每批处理的字体数量
+        current_batch = []
+        
         for font_name, path in self.font_paths.items():
-            if os.path.exists(path):
-                font_id = font_db.addApplicationFont(path)
-                if font_id >= 0:
-                    families = font_db.applicationFontFamilies(font_id)
-                    if families:
-                        loaded_fonts.add(families[0])
-                        log.info(f"加载字体成功: {families[0]}")
-                        log.info(f"实际字体名称: {families[0]}")
-                        continue
-            log.error(f"字体加载失败: {font_name}")
-
+            current_batch.append((font_name, path))
+            
+            if len(current_batch) >= batch_size:
+                for name, p in current_batch:
+                    task_id = f"load_font_{name}"
+                    future = thread_manager.submit_task(
+                        task_id,
+                        load_single_font,
+                        name,
+                        p
+                    )
+                    tasks[name] = future
+                current_batch = []
+        
+        # 处理剩余的字体
+        if current_batch:
+            for name, p in current_batch:
+                task_id = f"load_font_{name}"
+                future = thread_manager.submit_task(
+                    task_id,
+                    load_single_font,
+                    name,
+                    p
+                )
+                tasks[name] = future
+        
+        # 收集结果
+        for font_name, future in tasks.items():
+            try:
+                result = future.result(timeout=5)
+                if result['success']:
+                    loaded_fonts.add(result['family'])
+                    log.info(f"字体加载成功: {font_name}")
+                else:
+                    log.error(f"字体加载失败 {font_name}: {result['error']}")
+            except Exception as e:
+                log.error(f"等待字体加载结果失败 {font_name}: {str(e)}")
+        
         self._handle_fallbacks(loaded_fonts)
 
     def _handle_fallbacks(self, loaded_fonts):
