@@ -8,6 +8,8 @@ from core.log.log_manager import log
 from core.ui.little_card import LittleCard
 from core.utils.notif import Notification, NotificationType
 from core.font.font_pages_manager import FontPagesManager
+from core.ui.little_card2 import LittleCard2
+
 class InfoCard(QFrame):
     clicked = Signal(str)
     
@@ -99,7 +101,26 @@ class QuickStartPage(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(40, 40, 40, 40)
         main_layout.setSpacing(15)
+        """
+        # Card2预览用的代码，可删
+        # 左上角的LittleCard2
+        # top_card = LittleCard2(
+        #     title="Title",
+        #     label="Label",
+        #     action_text="Action"
+        # )
+        # top_card.setFixedSize(200, 120)  # 设置卡片大小
+        # top_card.clicked.connect(lambda: self.on_top_card_clicked())
         
+        # # 创建一个容器来包含top_card，并设置对齐方式
+        # top_container = QWidget()
+        # top_layout = QHBoxLayout(top_container)
+        # top_layout.setContentsMargins(0, 0, 0, 0)
+        # top_layout.addWidget(top_card, alignment=Qt.AlignLeft)
+        # top_layout.addStretch()  # 添加弹性空间，使卡片保持在左侧
+        
+        # main_layout.addWidget(top_container)
+        """
         # 顶部标题
         main_title = QLabel("ClutUI Nextgen")
         self.font_manager.apply_font(main_title, "title")  # 应用标题字体
@@ -193,4 +214,8 @@ class QuickStartPage(QWidget):
             
     def switch_page(self, page_name):
         self.switch_page_requested.emit(page_name)
-        log.info(f"请求切换到页面: {page_name}") 
+        log.info(f"请求切换到页面: {page_name}")
+
+    def on_top_card_clicked(self):
+        log.info("Top card clicked")
+        # 在这里添加点击卡片后的处理逻辑 

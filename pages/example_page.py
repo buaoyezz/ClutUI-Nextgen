@@ -5,6 +5,7 @@ from core.ui.card_white import CardWhite
 from core.ui.messagebox_white import MessageBoxWhite, MessageButton
 from core.font.font_pages_manager import FontPagesManager
 from core.animations.scroll_hide_show import ScrollBarAnimation
+from core.ui.notice import Notice
 
 class ExamplePage(QWidget):
     def __init__(self, parent=None):
@@ -17,6 +18,18 @@ class ExamplePage(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
+        
+        # 创建通知组件
+        notice_container = QWidget()
+        notice_layout = QVBoxLayout(notice_container)
+        notice_layout.setContentsMargins(20, 20, 20, 0)
+        
+        self.notice = Notice(message="很一个通知", icon="info")
+        notice_layout.addWidget(self.notice)
+        main_layout.addWidget(notice_container)
+        
+        # 显示通知
+        self.notice.show_message(duration=0)  # duration=0 表示不自动消失
         
         # 创建滚动区域容器
         scroll_container = QWidget()

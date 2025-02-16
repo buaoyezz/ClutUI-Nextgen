@@ -1,16 +1,16 @@
 from PySide6.QtWidgets import QApplication
 from core.log.log_manager import log
+from core.animations.close_app import CloseAppAnimation
 
 class WindowManager:
     @staticmethod
     def handle_close_event(window, event):
-        """处理窗口关闭事件"""
         if window._closing:
             event.accept()
             return
             
         try:
-            log.info("开始关闭应用程序")
+            log.info("Closing Application")
             window._closing = True
             event.ignore()
             
@@ -24,16 +24,16 @@ class WindowManager:
                 if hasattr(page, 'safe_cleanup'):
                     page.safe_cleanup()
             
-            # 延迟关闭
-            window._cleanup_timer.start(1000)  # 给予1秒的清理时间
+            # NEW: Close App Animation [Beta]
+            window._close_animation = CloseAppAnimation(window)
+            window._close_animation.start()
             
         except Exception as e:
-            log.error(f"关闭应用程序时出错: {str(e)}")
+            log.error(f"Error: 中头彩了|{str(e)}|可以去提交issue了")
             event.accept()
 
     @staticmethod
     def finish_close(window):
-        """完成窗口关闭流程"""
         try:
             # 强制清理所有页面的引用
             stacked_widget = window.pages_manager.get_stacked_widget()
@@ -44,14 +44,14 @@ class WindowManager:
                     widget.scanner = None
                 widget.deleteLater()
             
-            # 清理其他资源
+            # 清理资源
             QApplication.processEvents()
             
-            # 确保主窗口关闭
+            # 强制关闭窗口
             window.close()
             
         except Exception as e:
-            log.error(f"完成关闭时出错: {str(e)}")
+            log.error(f"Error: 中头彩了|{str(e)}")
             window.close()
 
     @staticmethod

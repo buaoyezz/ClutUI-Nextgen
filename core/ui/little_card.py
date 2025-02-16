@@ -5,6 +5,7 @@ from core.font.font_manager import FontManager
 from core.font.font_pages_manager import FontPagesManager
 from core.log.log_manager import log
 from core.utils.notif import Notification, NotificationType
+from core.ui.card_shadow import CardShadow
 
 class LittleCard(QFrame):
     clicked = Signal(str)
@@ -138,11 +139,7 @@ class LittleCard(QFrame):
         """)
         
         # 添加阴影效果
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 30))
-        shadow.setOffset(0, 2)
-        self.setGraphicsEffect(shadow)
+        self.setGraphicsEffect(CardShadow.get_shadow(self))
         
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:

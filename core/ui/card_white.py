@@ -17,7 +17,7 @@ class CardWhite(QFrame):
         self.description = description
         self.actions = actions or []
         self.clicked_states = {}
-        self.is_expanded = False  # 添加展开状态标记
+        self.is_expanded = False 
         
         self.font_pages_manager = FontPagesManager()
         self.font_manager = FontManager()
