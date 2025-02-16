@@ -66,7 +66,7 @@ class AboutPage(QWidget):
         subtitle.setAlignment(Qt.AlignCenter)
         container_layout.addWidget(subtitle)
         
-        version = QLabel("Version 0.0.5 Alpha")
+        version = QLabel("Version 0.0.6 Alpha")
         self.font_manager.apply_small_style(version)
         version.setAlignment(Qt.AlignCenter)
         container_layout.addWidget(version)
