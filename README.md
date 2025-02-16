@@ -1,6 +1,5 @@
-# ClutUI-Nextgen
-![LOGO](./preview/logo.png)
----
+# <img src="./resources/logo.png" width="24" height="24"> ClutUI-Nextgen
+
 ![界面预览](./preview/preview.png)  
 
 ## ✨ 项目特色
@@ -71,47 +70,29 @@
 ```batch
 REM 更新pip
 pip install --upgrade pip
-REM 安装PyInstaller
+REM 安装PyInstaller,Pillow
 pip install Pyinstaller 
-REM 更新PyInstaller
+pip install Pillow
+REM 更新PyInstaller,Pillow
 pip install --upgrade pyinstaller
+pip install --upgrade Pillow
 ```
 - 然后使用PyInstaller打包
 - 指令如下请在ClutUI_Nextgen_Main.py同级目录下执行
 ```batch
-REM 0.0.2 版本适配
-pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" --add-data="MaterialIcons-Regular.ttf;." --add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" --add-data="config;config" --add-data="core;core" --add-data="pages;pages" --add-data="preview;preview" --name="ClutUI_Nextgen" ClutUI_Nextgen_Main.py
-```
-```batch
-REM 0.0.3 版本适配
-pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" ^
---add-data="MaterialIcons-Regular.ttf;." ^
---add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" ^
---add-data="core/font/font/HarmonyOS_Sans_SC_Bold.ttf;core/font/font" ^
---add-data="core/font/font/HarmonyOS_Sans_SC_Regular.ttf;core/font/font" ^
---add-data="core/font/font/Mulish-Bold.ttf;core/font/font" ^
---add-data="core/font/font/Mulish-Regular.ttf;core/font/font" ^
---add-data="config;config" ^
---add-data="core;core" ^
---add-data="pages;pages" ^
---add-data="preview;preview" ^
---name="ClutUI_Nextgen" ^
-ClutUI_Nextgen_Main.py
-```
-```batch
-REM 0.0.4 版本适配
-pyinstaller --noconfirm --onefile --windowed --icon="preview/logo.png" ^
---add-data="MaterialIcons-Regular.ttf;." ^
+REM 0.0.6 版本适配
+REM 修正了新的项目格式
+pyinstaller --noconfirm --onefile --windowed --icon="resources/logo.png" ^
 --add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" ^
 --add-data="core/font/icons/codepoints;core/font/icons" ^
 --add-data="core/font/font/HarmonyOS_Sans_SC_Bold.ttf;core/font/font" ^
 --add-data="core/font/font/HarmonyOS_Sans_SC_Regular.ttf;core/font/font" ^
 --add-data="core/font/font/Mulish-Bold.ttf;core/font/font" ^
 --add-data="core/font/font/Mulish-Regular.ttf;core/font/font" ^
---add-data="config;config" ^
 --add-data="core;core" ^
 --add-data="pages;pages" ^
 --add-data="preview;preview" ^
+--add-data="resources;resources" ^
 --name="ClutUI_Nextgen" ^
 ClutUI_Nextgen_Main.py
 ```
