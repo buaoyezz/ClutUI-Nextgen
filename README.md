@@ -80,23 +80,26 @@ pip install --upgrade Pillow
 - 然后使用PyInstaller打包
 - 指令如下请在ClutUI_Nextgen_Main.py同级目录下执行
 ```batch
-REM 0.0.6 版本适配
+REM 0.0.8 版本适配
 REM 修正了新的项目格式
 pyinstaller --noconfirm --onefile --windowed --icon="resources/logo.png" ^
 --add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" ^
 --add-data="core/font/icons/codepoints;core/font/icons" ^
+--add-data="core/font/icons/statement.txt;core/font/icons" ^
 --add-data="core/font/font/HarmonyOS_Sans_SC_Bold.ttf;core/font/font" ^
 --add-data="core/font/font/HarmonyOS_Sans_SC_Regular.ttf;core/font/font" ^
 --add-data="core/font/font/Mulish-Bold.ttf;core/font/font" ^
 --add-data="core/font/font/Mulish-Regular.ttf;core/font/font" ^
+--add-data="locales;locales" ^
 --add-data="core;core" ^
 --add-data="pages;pages" ^
 --add-data="preview;preview" ^
 --add-data="resources;resources" ^
+--add-data="FontLicense;FontLicense" ^
+--add-data="config.json;." ^
 --name="ClutUI_Nextgen" ^
 ClutUI_Nextgen_Main.py
-```
-- 打包后运行`dist`下的`ClutUI_Nextgen_Main.exe`即可
+```- 打包后运行`dist`下的`ClutUI_Nextgen_Main.exe`即可
 
 ## 📦 Icons Map
 - 预先打开`core` -> `font`目录
@@ -171,4 +174,5 @@ ClutUI_Nextgen_Main.py
 - Website: https://zzbuaoye.us.kg
 
 注意：其他具体限制范围请咨询相关部门，若字体使用协议有变更，请及时通知我使用邮箱
+
 
