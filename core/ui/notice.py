@@ -344,7 +344,6 @@ class Notice(QFrame):
         self.restore_animation.start()
 
     def update_message(self, new_message):
-        """更新通知消息"""
         if self.message == new_message:
             return
             

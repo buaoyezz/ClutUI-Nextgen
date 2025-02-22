@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt, Signal, QMimeData, QSize
 from PySide6.QtGui import QColor, QDragEnterEvent, QDropEvent, QTextImageFormat, QTextCursor, QPixmap
 from core.font.font_manager import FontManager
 from core.font.font_pages_manager import FontPagesManager
-import emoji  # 添加 emoji 库
 import os
 
 class EmojiMenu(QMenu):
@@ -77,7 +76,6 @@ class EmojiMenu(QMenu):
                 "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍",
                 "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖",
             ],
-            # ... 可以继续添加更多分类
         }
         
         for category, emojis in emoji_categories.items():

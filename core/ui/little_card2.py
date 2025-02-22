@@ -158,7 +158,6 @@ class LittleCard2(QFrame):
             self.clicked.emit(self.title)
             
     def update_content(self, title=None, label=None, action_text=None):
-        """更新卡片内容"""
         if title is not None:
             self.title = title
             self.title_label.setText(title)

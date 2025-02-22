@@ -100,7 +100,6 @@ class ComboBox(QComboBox):
         self.setFixedHeight(36)
         
     def showPopup(self):
-        """重写显示弹出框方法以调整样式喵"""
         super().showPopup()
         popup = self.findChild(QListView)
         if popup:
