@@ -6,18 +6,83 @@ from core.ui.messagebox_white import MessageBoxWhite, MessageButton
 from core.font.font_pages_manager import FontPagesManager
 from core.animations.scroll_hide_show import ScrollBarAnimation
 from core.ui.notice import Notice
+from core.i18n import i18n
 
 class ExamplePage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.font_manager = FontPagesManager()
+        
+        # 创建主布局
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        
         self.setup_ui()
         
+        # 注册语言变更回调
+        i18n.add_language_change_callback(self.update_text)
+        
     def setup_ui(self):
-        # 创建主布局
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        # 设置全局样式
+        self.setStyleSheet("""
+            QWidget#scrollContainer {
+                background: transparent;
+                margin: 0px 20px;
+            }
+            
+            QScrollArea#scrollArea, QScrollArea#scrollArea > QWidget#qt_scrollarea_viewport {
+                background: transparent;
+                border: none;
+                border-radius: 12px;
+            }
+            
+            QWidget#container {
+                background: #F8F9FA;
+                border-radius: 12px;
+            }
+            
+            QPushButton {
+                background: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+            
+            QPushButton:hover {
+                background: #1E88E5;
+            }
+            
+            QPushButton:pressed {
+                background: #1976D2;
+            }
+            
+            QScrollBar:vertical {
+                background: transparent;
+                width: 8px;
+                margin: 4px 4px 4px 4px;
+            }
+            
+            QScrollBar::handle:vertical {
+                background: #C0C0C0;
+                border-radius: 4px;
+                min-height: 30px;
+            }
+            
+            QScrollBar::handle:vertical:hover {
+                background: #A0A0A0;
+            }
+            
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: transparent;
+            }
+        """)
         
         # 创建通知组件
         notice_container = QWidget()
@@ -26,7 +91,7 @@ class ExamplePage(QWidget):
         
         self.notice = Notice(message="很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知", icon="info")
         notice_layout.addWidget(self.notice)
-        main_layout.addWidget(notice_container)
+        self.layout.addWidget(notice_container)
         
         # 显示通知
         self.notice.show_message(duration=0)  # duration=0 表示不自动消失
@@ -115,65 +180,7 @@ class ExamplePage(QWidget):
         scroll_container_layout.addWidget(scroll_area)
         
         # 将滚动容器添加到主布局
-        main_layout.addWidget(scroll_container)
-        
-        # 设置页面样式
-        self.setStyleSheet("""
-            QWidget#scrollContainer {
-                background: transparent;
-                margin: 0px 20px;
-            }
-            
-            QScrollArea#scrollArea {
-                background: transparent;
-                border: none;
-            }
-            
-            QWidget#container {
-                background: #F8F9FA;
-            }
-            
-            QPushButton {
-                background: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 4px;
-            }
-            
-            QPushButton:hover {
-                background: #1E88E5;
-            }
-            
-            QPushButton:pressed {
-                background: #1976D2;
-            }
-            
-            QScrollBar:vertical {
-                background: transparent;
-                width: 8px;
-                margin: 4px 4px 4px 4px;
-            }
-            
-            QScrollBar::handle:vertical {
-                background: #C0C0C0;
-                border-radius: 4px;
-                min-height: 30px;
-            }
-            
-            QScrollBar::handle:vertical:hover {
-                background: #A0A0A0;
-            }
-            
-            QScrollBar::add-line:vertical,
-            QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-            
-            QScrollBar::add-page:vertical,
-            QScrollBar::sub-page:vertical {
-                background: transparent;
-            }
-        """)
+        self.layout.addWidget(scroll_container)
 
     def show_basic_message(self):
         message_box = MessageBoxWhite(
@@ -231,3 +238,17 @@ class ExamplePage(QWidget):
             "save": "保存操作"
         }
         print(f"用户点击了: {action_map.get(button.return_value, button.text)}")
+
+    def update_text(self):
+        # 更新按钮文本
+        for button in self.findChildren(QPushButton):
+            if button.text() == "基础消息框":
+                button.setText(i18n.get_text("basic_message"))
+            elif button.text() == "确认消息框":
+                button.setText(i18n.get_text("confirm_message"))
+            elif button.text() == "自定义消息框":
+                button.setText(i18n.get_text("custom_message"))
+                
+        # 更新通知文本
+        if hasattr(self, 'notice'):
+            self.notice.update_message(i18n.get_text("long_notice"))

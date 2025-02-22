@@ -9,20 +9,25 @@ from core.log.log_manager import log
 from core.ui.scroll_style import ScrollStyle
 from core.animations.scroll_hide_show import ScrollBarAnimation
 from core.font.font_manager import resource_path
+from core.i18n import i18n
 import os
 
 class AboutPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.font_manager = FontPagesManager()
+        
+        # 创建主布局
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        
         self.setup_ui()
         
-    def setup_ui(self):
-        # 创建主布局
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        # 注册语言变更回调
+        i18n.add_language_change_callback(self.update_text)
         
+    def setup_ui(self):
         # 创建一个容器来包裹滚动区域
         scroll_container = QWidget()
         scroll_container.setObjectName("scrollContainer")
@@ -61,31 +66,34 @@ class AboutPage(QWidget):
         logo_label.setAlignment(Qt.AlignCenter)
         container_layout.addWidget(logo_label)
         
-        subtitle = QLabel("Next Generation")
-        self.font_manager.apply_subtitle_style(subtitle)
-        subtitle.setAlignment(Qt.AlignCenter)
-        container_layout.addWidget(subtitle)
+        self.subtitle = QLabel("Next Generation")
+        self.font_manager.apply_subtitle_style(self.subtitle)
+        self.subtitle.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(self.subtitle)
         
-        version = QLabel("Version 0.0.6 Alpha")
-        self.font_manager.apply_small_style(version)
-        version.setAlignment(Qt.AlignCenter)
-        container_layout.addWidget(version)
+        self.version = QLabel("Version 0.0.6 Alpha")
+        self.font_manager.apply_small_style(self.version)
+        self.version.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(self.version)
         
         container_layout.addSpacing(40)
     
         main_buttons = QHBoxLayout()
         main_buttons.setSpacing(20)
         
-        buttons_data = [
-            ("更新日志", "https://github.com/buaoyezz/ClutUI-Nextgen/releases", "history"),
-            ("文档", "https://zzbuaoye.us.kg/clutui/docs/", "article"),
-            ("源代码", "https://github.com/buaoyezz/ClutUI-Nextgen", "code"),
+        # 按钮配置
+        self.buttons_data = [
+            ("changelog", "https://github.com/buaoyezz/ClutUI-Nextgen/releases", "history"),
+            ("documentation", "https://zzbuaoye.us.kg/clutui/docs/", "article"),
+            ("source_code", "https://github.com/buaoyezz/ClutUI-Nextgen", "code"),
         ]
         
-        for text, url, icon in buttons_data:
-            btn = WhiteButton(title=text, icon=self.font_manager.get_icon_text(icon))
+        self.main_buttons = []  # 存储主要按钮引用
+        for key, url, icon in self.buttons_data:
+            btn = WhiteButton(title=i18n.get_text(key), icon=self.font_manager.get_icon_text(icon))
             btn.clicked.connect(lambda u=url: QDesktopServices.openUrl(QUrl(u)))
             main_buttons.addWidget(btn)
+            self.main_buttons.append((key, btn))  # 保存按钮引用和对应的key
         
         main_buttons.setAlignment(Qt.AlignCenter)
         container_layout.addLayout(main_buttons)
@@ -93,31 +101,32 @@ class AboutPage(QWidget):
         container_layout.addSpacing(30)
         
         # 介绍文本
-        intro_text = QLabel(
-            "ClutUI Next Generation 是不基于ClutUI1.0的新一代的UI开发框架\n"
-            "致力于提供简单、高效、美观的界面开发体验"
-        )
-        intro_text.setWordWrap(True)
-        self.font_manager.apply_normal_style(intro_text)
-        intro_text.setAlignment(Qt.AlignCenter)
-        container_layout.addWidget(intro_text)
+        self.intro_text = QLabel(i18n.get_text("intro_text"))
+        self.intro_text.setWordWrap(True)
+        self.font_manager.apply_normal_style(self.intro_text)
+        self.intro_text.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                background: transparent;
+            }
+        """)
+        self.intro_text.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(self.intro_text)
         
         container_layout.addSpacing(40)
         
         # 技术信息
-        tech_info = QLabel(
-            "基于 Python 3.12 & PySide6\n"
-            "界面设计参考 Material Design 3\n"
-            "字体: HarmonyOS Sans & Mulish\n"
-            "图标: Material Icons\n"
-            "动画: QPropertyAnimation & QEasingCurve\n"
-            "本软件使用的上述字体，请遵守相关协议和限制，不可修改，不可二次分发，其他具体限制范围需要咨询相关部门\n"
-            "详情查看下述按钮相关协议与许可协议"
-        )
-        tech_info.setWordWrap(True)
-        self.font_manager.apply_small_style(tech_info)
-        tech_info.setAlignment(Qt.AlignCenter)
-        container_layout.addWidget(tech_info)
+        self.tech_info = QLabel(i18n.get_text("tech_info"))
+        self.tech_info.setWordWrap(True)
+        self.font_manager.apply_small_style(self.tech_info)
+        self.tech_info.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                background: transparent;
+            }
+        """)
+        self.tech_info.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(self.tech_info)
         
         container_layout.addSpacing(20)
         
@@ -125,16 +134,18 @@ class AboutPage(QWidget):
         legal_buttons = QHBoxLayout()
         legal_buttons.setSpacing(15)
         
-        legal_data = [
-            ("许可协议", "https://zzbuaoye.us.kg/clutui/font/license.txt", "gavel"),
-            ("相关协议", "https://zzbuaoye.us.kg/clutui/statement.txt", "shield"),
+        self.legal_buttons_data = [
+            ("license", "https://zzbuaoye.us.kg/clutui/font/license.txt", "gavel"),
+            ("related_terms", "https://zzbuaoye.us.kg/clutui/statement.txt", "shield"),
         ]
         
-        for text, url, icon in legal_data:
-            btn = WhiteButton(title=text, icon=self.font_manager.get_icon_text(icon))
+        self.legal_buttons = []  # 存储法律按钮引用
+        for key, url, icon in self.legal_buttons_data:
+            btn = WhiteButton(title=i18n.get_text(key), icon=self.font_manager.get_icon_text(icon))
             btn.setFixedWidth(120)
             btn.clicked.connect(lambda u=url: QDesktopServices.openUrl(QUrl(u)))
             legal_buttons.addWidget(btn)
+            self.legal_buttons.append((key, btn))  # 保存按钮引用和对应的key
         
         legal_buttons.setAlignment(Qt.AlignCenter)
         container_layout.addLayout(legal_buttons)
@@ -142,10 +153,10 @@ class AboutPage(QWidget):
         container_layout.addSpacing(30)
         
         # 版权信息
-        copyright = QLabel("© 2025 ClutUI Next Generation. All rights reserved.")
-        self.font_manager.apply_small_style(copyright)
-        copyright.setAlignment(Qt.AlignCenter)
-        container_layout.addWidget(copyright)
+        self.copyright = QLabel(i18n.get_text("copyright"))
+        self.font_manager.apply_small_style(self.copyright)
+        self.copyright.setAlignment(Qt.AlignCenter)
+        container_layout.addWidget(self.copyright)
         
         container_layout.addStretch()
         
@@ -154,7 +165,7 @@ class AboutPage(QWidget):
         scroll_container_layout.addWidget(scroll_area)
         
         # 将滚动容器添加到主布局
-        main_layout.addWidget(scroll_container)
+        self.layout.addWidget(scroll_container)
         
         # 更新样式表
         self.setStyleSheet(f"""
@@ -221,3 +232,34 @@ class AboutPage(QWidget):
                 log.error("未找到主窗口实例")
         except Exception as e:
             log.error(f"显示通知出错: {str(e)}")
+
+    def update_text(self):
+        # 更新标题文本
+        if hasattr(self, 'subtitle'):
+            self.subtitle.setText(i18n.get_text("next_generation"))
+            
+        # 更新版本文本
+        if hasattr(self, 'version'):
+            self.version.setText(i18n.get_text("version"))
+            
+        # 更新主要按钮文本
+        if hasattr(self, 'main_buttons'):
+            for key, button in self.main_buttons:
+                button.update_title(i18n.get_text(key))
+                    
+        # 更新介绍文本
+        if hasattr(self, 'intro_text'):
+            self.intro_text.setText(i18n.get_text("intro_text"))
+            
+        # 更新技术信息
+        if hasattr(self, 'tech_info'):
+            self.tech_info.setText(i18n.get_text("tech_info"))
+            
+        # 更新法律按钮文本
+        if hasattr(self, 'legal_buttons'):
+            for key, button in self.legal_buttons:
+                button.update_title(i18n.get_text(key))
+                    
+        # 更新版权信息
+        if hasattr(self, 'copyright'):
+            self.copyright.setText(i18n.get_text("copyright"))

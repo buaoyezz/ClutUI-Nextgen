@@ -86,7 +86,6 @@ class NotificationAnimation(QWidget):
         log.debug(f"通知隐藏动画开始 - 索引: {self.current_index}")
         
     def cleanup(self):
-        """清理通知并更新其他通知的位置"""
         self.hide()
         self.current_index = max(0, self.current_index - 1)
         # 这里可以发送信号通知管理器更新其他通知的位置 

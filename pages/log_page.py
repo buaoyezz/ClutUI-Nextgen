@@ -1,10 +1,11 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel, 
-                             QHBoxLayout, QLineEdit, QPushButton)
+                             QHBoxLayout, QLineEdit, QPushButton, QScrollBar)
 from PySide6.QtCore import Qt, QTimer, QRegularExpression
 from PySide6.QtGui import QTextCharFormat, QColor, QTextCursor
 from core.log.log_manager import log
 from core.ui.scroll_style import ScrollStyle
 from core.font.font_pages_manager import FontPagesManager
+from core.i18n import i18n
 import os
 import re
 
@@ -15,7 +16,7 @@ class LogPage(QWidget):
         self.font_manager = FontPagesManager()  # 添加字体管理器
         self.last_content = ""  # 添加变量保存上次的内容
         self.last_update_time = 0  # 添加变量记录上次更新时间
-        self.auto_scroll = False  # 添加自动滚动标志
+        self.auto_scroll = True  # 添加自动滚动标志
         self.setup_ui()
         self.load_logs()
         
@@ -23,6 +24,9 @@ class LogPage(QWidget):
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.check_logs_update)
         self.update_timer.start(2000)  # 改为2秒检查一次
+        
+        # 注册语言变更回调
+        i18n.add_language_change_callback(self.update_text)
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -30,15 +34,15 @@ class LogPage(QWidget):
         layout.setSpacing(20)
 
         # 标题
-        title = QLabel("系统日志")
-        self.font_manager.apply_title_style(title)  # 应用标题字体
-        layout.addWidget(title)
+        self.title_label = QLabel(i18n.get_text("system_log"))
+        self.font_manager.apply_title_style(self.title_label)  # 应用标题字体
+        layout.addWidget(self.title_label)
 
         # 搜索栏样式优化
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.font_manager.apply_normal_style(self.search_input)  # 应用普通字体
-        self.search_input.setPlaceholderText("输入关键字搜索日志内容")
+        self.search_input.setPlaceholderText(i18n.get_text("search_placeholder"))
         self.search_input.setStyleSheet("""
             QLineEdit {
                 padding: 8px;
@@ -51,7 +55,7 @@ class LogPage(QWidget):
         self.search_input.textChanged.connect(self.search_logs)  # 改为实时搜索
         
         # 添加自动滚动按钮
-        self.auto_scroll_btn = QPushButton("自动最新")
+        self.auto_scroll_btn = QPushButton(i18n.get_text("auto_scroll"))
         self.auto_scroll_btn.setCheckable(True)
         self.auto_scroll_btn.setStyleSheet("""
             QPushButton {
@@ -148,6 +152,30 @@ class LogPage(QWidget):
             }}
             {ScrollStyle.get_style()}
         """)
+        
+        # 自定义滚动条样式
+        scroll_bar = QScrollBar()
+        scroll_bar.setStyleSheet("""
+            QScrollBar:vertical {
+                border: none;
+                background: #F0F0F0;
+                width: 10px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical {
+                background: #BDBDBD;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none;
+            }
+        """)
+        self.log_display.setVerticalScrollBar(scroll_bar)
+        
         layout.addWidget(self.log_display)
 
         # 设置日志显示区域的最小高度
@@ -169,7 +197,7 @@ class LogPage(QWidget):
         pattern = f'(?<!<[^>]*){re.escape(search_text)}'
         highlighted_text = re.sub(
             pattern,
-            f'<span style="{highlight_format}">\g<0></span>',
+            r'<span style="{}">\g<0></span>'.format(highlight_format),
             current_html,
             flags=re.IGNORECASE
         )
@@ -290,7 +318,6 @@ class LogPage(QWidget):
             self.stats_buttons[level].setText(f"{level}: {count}")
 
     def check_logs_update(self):
-        """检查日志是否有更新，只在有更新时才刷新显示"""
         try:
             log_dir = os.path.join(os.path.expanduser('~'), '.clutui_nextgen_example', 'logs')
             latest_log = max(
@@ -367,10 +394,16 @@ class LogPage(QWidget):
             self.log_display.setText(f"加载日志文件时出错: {str(e)}")
 
     def toggle_auto_scroll(self):
-        """切换自动滚动状态"""
         self.auto_scroll = self.auto_scroll_btn.isChecked()
         if self.auto_scroll:
             # 立即滚动到底部
             self.log_display.verticalScrollBar().setValue(
                 self.log_display.verticalScrollBar().maximum()
             )
+
+    def update_text(self):
+        self.title_label.setText(i18n.get_text("system_log"))
+        self.search_input.setPlaceholderText(i18n.get_text("search_placeholder"))
+        self.auto_scroll_btn.setText(i18n.get_text("auto_scroll"))
+        for btn_level, button in self.stats_buttons.items():
+            button.setText(f"{btn_level}: 0")

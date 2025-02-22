@@ -4,12 +4,15 @@
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QIcon
 from core.utils.initialization_manager import InitializationManager
 from core.log.log_manager import log
 from core.utils.notif import Notification, NotificationType
 from core.ui.title_bar import TitleBar
 from core.window.window_manager import WindowManager
+from core.i18n import i18n
 import sys
+import os
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -17,10 +20,15 @@ class MainWindow(QMainWindow):
         
         InitializationManager.init_log_directory()
         InitializationManager.init_window_components(self)
-        log.info("初始化主窗口")
+        log.info(i18n.get_text("init_window"))
+        
+        # 设置应用图标
+        icon = QIcon("resources/logo.png")
+        self.setWindowIcon(icon)
+        QApplication.setWindowIcon(icon)
         
         # 设置窗口基本属性
-        self.setWindowTitle("ClutUI Nextgen")
+        self.setWindowTitle(i18n.get_text("app_title", "ClutUI Nextgen"))
         self.setMinimumSize(600, 450)
         self.resize(1080, 650)
         
@@ -36,7 +44,7 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
         
         self.title_bar = TitleBar(self)
-        self.title_bar.title_label.setText("ClutUI Next Generation")
+        self.title_bar.title_label.setText(i18n.get_text("app_title_full", "ClutUI Next Generation"))
         main_layout.addWidget(self.title_bar)
         
         # 创建内容区域容器
@@ -81,12 +89,22 @@ class MainWindow(QMainWindow):
         self._cleanup_timer.setSingleShot(True)
         self._cleanup_timer.timeout.connect(self._finish_close)
         self._notifications = []
+        
+        # 注册语言变更回调
+        i18n.add_language_change_callback(self._on_language_changed)
+
+    def _on_language_changed(self):
+        self.setWindowTitle(i18n.get_text("app_title", "ClutUI Nextgen"))
+        self.title_bar.title_label.setText(i18n.get_text("app_title_full", "ClutUI Next Generation"))
+        # 通知页面管理器更新所有页面的文本
+        self.pages_manager.update_all_pages_text()
 
     def closeEvent(self, event):
         WindowManager.handle_close_event(self, event)
 
     def _finish_close(self):
         WindowManager.finish_close(self)
+        i18n.remove_language_change_callback(self._on_language_changed)
 
     def switch_page(self, page_name):
         WindowManager.switch_page(self, page_name)
@@ -109,10 +127,10 @@ if __name__ == '__main__':
         app = InitializationManager.init_application()
         window = MainWindow()
         window.show()
-        log.info("ClutUI Nextgen 已经启动！")
+        log.info(i18n.get_text("app_started"))
         
         notification = Notification(
-            text="这是一条通知消息 ",
+            text=i18n.get_text("welcome_notification"),
             type=NotificationType.TIPS,
             parent=window
         )
@@ -123,6 +141,6 @@ if __name__ == '__main__':
         sys.exit(exit_code)
         
     except Exception as e:
-        log.error(f"应用程序运行出错: {str(e)}")
+        log.error(f"{i18n.get_text('app_error')}: {str(e)}")
         sys.exit(1)
 

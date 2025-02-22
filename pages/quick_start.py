@@ -9,6 +9,7 @@ from core.ui.little_card import LittleCard
 from core.utils.notif import Notification, NotificationType
 from core.font.font_pages_manager import FontPagesManager
 from core.ui.little_card2 import LittleCard2
+from core.i18n import i18n
 
 class InfoCard(QFrame):
     clicked = Signal(str)
@@ -94,33 +95,19 @@ class QuickStartPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.info_cards = {}
-        self.font_manager = FontPagesManager()  # 添加字体管理器
+        self.font_manager = FontPagesManager()
+        
+        # 创建主布局
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(40, 40, 40, 40)
+        self.layout.setSpacing(15)
+        
         self.setup_ui()
         
+        # 注册语言变更回调
+        i18n.add_language_change_callback(self.update_text)
+
     def setup_ui(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(40, 40, 40, 40)
-        main_layout.setSpacing(15)
-        """
-        # Card2预览用的代码，可删
-        # 左上角的LittleCard2
-        # top_card = LittleCard2(
-        #     title="Title",
-        #     label="Label",
-        #     action_text="Action"
-        # )
-        # top_card.setFixedSize(200, 120)  # 设置卡片大小
-        # top_card.clicked.connect(lambda: self.on_top_card_clicked())
-        
-        # # 创建一个容器来包含top_card，并设置对齐方式
-        # top_container = QWidget()
-        # top_layout = QHBoxLayout(top_container)
-        # top_layout.setContentsMargins(0, 0, 0, 0)
-        # top_layout.addWidget(top_card, alignment=Qt.AlignLeft)
-        # top_layout.addStretch()  # 添加弹性空间，使卡片保持在左侧
-        
-        # main_layout.addWidget(top_container)
-        """
         # 顶部标题
         main_title = QLabel("ClutUI Nextgen")
         self.font_manager.apply_font(main_title, "title")  # 应用标题字体
@@ -131,7 +118,7 @@ class QuickStartPage(QWidget):
             }
         """)
         main_title.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(main_title)
+        self.layout.addWidget(main_title)
         
         # 说明文本
         description = QLabel("")
@@ -143,9 +130,9 @@ class QuickStartPage(QWidget):
             }
         """)
         description.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(description)
+        self.layout.addWidget(description)
         
-        main_layout.addSpacing(40)
+        self.layout.addSpacing(40)
         
         # 信息卡片配置
         cards_config = [
@@ -181,9 +168,9 @@ class QuickStartPage(QWidget):
             self.info_cards[config["title"]] = card
             grid_layout.addWidget(card)
             
-        main_layout.addLayout(grid_layout)
+        self.layout.addLayout(grid_layout)
         
-        main_layout.addSpacing(30)
+        self.layout.addSpacing(30)
          
         # 设置整体样式
         self.setStyleSheet("""
@@ -219,3 +206,27 @@ class QuickStartPage(QWidget):
     def on_top_card_clicked(self):
         log.info("Top card clicked")
         # 在这里添加点击卡片后的处理逻辑 
+
+    def update_text(self):
+        """更新页面所有文本"""
+        # 更新卡片文本
+        cards_config = {
+            "Pyside6 Link": {
+                "description": i18n.get_text("official_doc")
+            },
+            "Python Link": {
+                "description": i18n.get_text("python_official")
+            },
+            "Clut UI Link": {
+                "description": i18n.get_text("project_repo")
+            },
+            "ZZBUAOYE Link": {
+                "description": i18n.get_text("author_page")
+            }
+        }
+        
+        for title, config in cards_config.items():
+            if title in self.info_cards:
+                card = self.info_cards[title]
+                if hasattr(card, 'description_label'):
+                    card.description_label.setText(config["description"]) 
