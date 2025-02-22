@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, QPropertyAnimation, QRectF, Property, Signal
 from PySide6.QtGui import QPainter, QColor, QPainterPath
+from core.i18n import i18n
 
 class QSwitch(QWidget):
     # 开关状态改变信号
@@ -16,14 +17,31 @@ class QSwitch(QWidget):
         self._checked = False
         self._margin = 3
         self._thumb_position = self._margin
-        self._animation = QPropertyAnimation(self, b"thumbPosition", self)
-        self._animation.setDuration(200)
         
         # 设置颜色
-        self._track_color_on = QColor("#64B5F6")  # 蓝色轨道
-        self._track_color_off = QColor("#CCCCCC")  # 灰色轨道
-        self._thumb_color = QColor("#FFFFFF")  # 白色滑块
+        self._track_color_on = QColor("#2196F3")  # 更改为主题蓝色
+        self._track_color_off = QColor("#CCCCCC")
+        self._thumb_color = QColor("#FFFFFF")
         
+        # 创建动画
+        self._animation = QPropertyAnimation(self, b"thumb_position")
+        self._animation.setDuration(200)
+        
+        # 添加 NoFocus 属性
+        self.setFocusPolicy(Qt.NoFocus)
+        
+        # 设置工具提示
+        self.update_tooltip()
+        
+        # 注册语言变更回调
+        i18n.add_language_change_callback(self.update_text)
+        
+    def update_text(self):
+        self.update_tooltip()
+        
+    def update_tooltip(self):
+        self.setToolTip(i18n.get_text("enabled" if self._checked else "disabled"))
+
     def sizeHint(self):
         return self.minimumSizeHint()
 
@@ -66,21 +84,21 @@ class QSwitch(QWidget):
         self.setCursor(Qt.PointingHandCursor)
         super().enterEvent(event)
 
-    @Property(float)
-    def thumbPosition(self):
+    def get_thumb_position(self):
         return self._thumb_position
 
-    @thumbPosition.setter
-    def thumbPosition(self, pos):
-        self._thumb_position = pos
-        self.update()
+    def set_thumb_position(self, pos):
+        if self._thumb_position != pos:
+            self._thumb_position = pos
+            self.update()
+
+    thumb_position = Property(float, get_thumb_position, set_thumb_position)
 
     def setChecked(self, checked):
         if self._checked != checked:
             self._checked = checked
             self.stateChanged.emit(checked)
             
-            # 设置动画
             self._animation.setStartValue(self._thumb_position)
             if checked:
                 self._animation.setEndValue(self.width() - self.height() + self._margin)
