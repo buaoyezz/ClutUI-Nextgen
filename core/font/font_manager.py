@@ -80,6 +80,7 @@ class FontLoaderThread(QThread):
 class FontManager:
     _instance = None
     _initialized = False
+    _fonts_loaded = False
     
     def __new__(cls):
         if cls._instance is None:
@@ -89,7 +90,6 @@ class FontManager:
     def __init__(self):
         if not FontManager._initialized:
             self._init_basic_fonts()
-            self._start_async_font_loading()
             FontManager._initialized = True
     
     def _init_basic_fonts(self):
@@ -113,8 +113,14 @@ class FontManager:
             font_id = font_db.addApplicationFont(self.icon_font_path)
             if font_id >= 0:
                 log.info("加载图标字体成功")
+                
+        # 同步加载其他字体
+        self._load_fonts_sync()
     
-    def _start_async_font_loading(self):
+    def _load_fonts_sync(self):
+        """同步加载字体"""
+        log.info("开始同步加载字体")
+        font_db = QFontDatabase()
         fonts_to_load = [
             (self.mulish_font_path, "Mulish Regular"),
             (self.mulish_bold_path, "Mulish Bold"), 
@@ -122,30 +128,21 @@ class FontManager:
             (self.hmsans_bold_path, "HarmonyOS Sans SC Bold"),
         ]
         
-        self.font_loader = FontLoaderThread(fonts_to_load)
-        self.font_loader.progress.connect(self._on_font_progress)
-        self.font_loader.finished.connect(self._on_fonts_loaded)
+        for font_path, font_name in fonts_to_load:
+            try:
+                if os.path.exists(font_path):
+                    font_id = font_db.addApplicationFont(font_path)
+                    if font_id >= 0:
+                        log.info(f"同步加载字体成功: {font_name}")
+                    else:
+                        log.error(f"同步加载字体失败: {font_name}")
+                else:
+                    log.error(f"字体文件不存在: {font_path}")
+            except Exception as e:
+                log.error(f"加载字体出错 {font_name}: {str(e)}")
         
-        # 使用线程管理器启动加载
-        thread_manager.submit_task(
-            "font_loading_main",
-            self.font_loader.run
-        )
-    
-    def _on_font_progress(self, message: str, percent: int):
-        log.debug(f"字体加载进度 {percent}%: {message}")
-    
-    def _on_fonts_loaded(self, results: dict):
-        success_fonts = []
-        for font_name, result in results.items():
-            if result['success']:
-                success_fonts.append(font_name)
-                log.info(f"字体加载成功: {font_name}")
-            else:
-                log.error(f"字体加载失败 {font_name}: {result.get('error', '未知错误')}")
-        
-        if success_fonts:
-            log.info(f"字体加载完成: {', '.join(success_fonts)}")
+        FontManager._fonts_loaded = True
+        log.info("字体同步加载完成")
 
     def _get_background_color(self, widget):
         # QApplication 默认使用亮色主题

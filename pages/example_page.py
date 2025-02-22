@@ -24,7 +24,7 @@ class ExamplePage(QWidget):
         notice_layout = QVBoxLayout(notice_container)
         notice_layout.setContentsMargins(20, 20, 20, 0)
         
-        self.notice = Notice(message="很一个通知", icon="info")
+        self.notice = Notice(message="很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知", icon="info")
         notice_layout.addWidget(self.notice)
         main_layout.addWidget(notice_container)
         
