@@ -36,7 +36,6 @@ class InitializationManager:
 
     @staticmethod
     def init_window_components(window):
-        """初始化窗口组件"""
         # 初始化基本属性
         window.moving = False
         window.offset = None
