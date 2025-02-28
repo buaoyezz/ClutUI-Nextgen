@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-                             QScrollArea)
+                             QScrollArea, QLabel)
 from PySide6.QtCore import Qt
 from core.ui.card_white import CardWhite
 from core.ui.messagebox_white import MessageBoxWhite, MessageButton
@@ -7,11 +7,13 @@ from core.font.font_pages_manager import FontPagesManager
 from core.animations.scroll_hide_show import ScrollBarAnimation
 from core.ui.notice import Notice
 from core.i18n import i18n
+from core.utils.yiyanapi import YiyanAPI
 
 class ExamplePage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.font_manager = FontPagesManager()
+        self.yiyan_api = YiyanAPI()
         
         # 创建主布局
         self.layout = QVBoxLayout(self)
@@ -20,8 +22,8 @@ class ExamplePage(QWidget):
         
         self.setup_ui()
         
-        # 注册语言变更回调
-        i18n.add_language_change_callback(self.update_text)
+        # 连接语言变更信号
+        i18n.language_changed.connect(self.update_text)
         
     def setup_ui(self):
         # 设置全局样式
@@ -38,15 +40,38 @@ class ExamplePage(QWidget):
             }
             
             QWidget#container {
-                background: #F8F9FA;
+                background: transparent;
                 border-radius: 12px;
+            }
+            
+            QLabel {
+                color: #333333;
+                background: transparent;
+                font-size: 14px;
+                letter-spacing: 0.3px;
+            }
+            
+            QLabel[class="title"] {
+                font-size: 16px;
+                font-weight: 500;
+                color: #1F2937;
+            }
+            
+            QLabel[class="description"] {
+                font-size: 13px;
+                color: #666666;
+                line-height: 1.5;
             }
             
             QPushButton {
                 background: #2196F3;
                 color: white;
                 border: none;
-                border-radius: 4px;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-size: 14px;
+                font-weight: 500;
+                letter-spacing: 0.3px;
             }
             
             QPushButton:hover {
@@ -87,9 +112,10 @@ class ExamplePage(QWidget):
         # 创建通知组件
         notice_container = QWidget()
         notice_layout = QVBoxLayout(notice_container)
-        notice_layout.setContentsMargins(20, 20, 20, 0)
+        notice_layout.setContentsMargins(40, 20, 40, 0)
         
-        self.notice = Notice(message="很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知很一个通知", icon="info")
+        hitokoto = self.yiyan_api.get_hitokoto_sync()
+        self.notice = Notice(message=hitokoto, icon="info")
         notice_layout.addWidget(self.notice)
         self.layout.addWidget(notice_container)
         
@@ -100,7 +126,7 @@ class ExamplePage(QWidget):
         scroll_container = QWidget()
         scroll_container.setObjectName("scrollContainer")
         scroll_container_layout = QVBoxLayout(scroll_container)
-        scroll_container_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_container_layout.setContentsMargins(20, 0, 20, 0)
         
         # 设置滚动区域
         scroll_area = QScrollArea()
@@ -120,7 +146,7 @@ class ExamplePage(QWidget):
         container = QWidget()
         container.setObjectName("container")
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(40, 20, 40, 20)
         layout.setSpacing(20)
         
         # 原有的按钮和卡片内容
@@ -170,6 +196,36 @@ class ExamplePage(QWidget):
             description=text
         )
         
+        # 设置卡片样式
+        card_style = """
+            CardWhite {
+                background: transparent;
+                border-radius: 12px;
+                border: 1px solid #E0E0E0;
+            }
+            CardWhite:hover {
+                border: 1px solid #2196F3;
+                background: rgba(33, 150, 243, 0.04);
+            }
+            QLabel[class="title"] {
+                color: #1F2937;
+                font-size: 16px;
+                font-weight: 500;
+                letter-spacing: 0.3px;
+                padding: 4px 0;
+            }
+            QLabel[class="description"] {
+                color: #666666;
+                font-size: 14px;
+                line-height: 1.6;
+                letter-spacing: 0.2px;
+            }
+        """
+        
+        info_card.setStyleSheet(card_style)
+        confirm_card.setStyleSheet(card_style)
+        custom_card.setStyleSheet(card_style)
+        
         layout.addWidget(info_card)
         layout.addWidget(confirm_card)
         layout.addWidget(custom_card)
@@ -184,7 +240,7 @@ class ExamplePage(QWidget):
 
     def show_basic_message(self):
         message_box = MessageBoxWhite(
-            title="提示",
+            title="基础消息框",
             message="这是一个基础消息框示例",
             buttons=[MessageButton("确定", "primary")],
             icon="info",
@@ -198,7 +254,7 @@ class ExamplePage(QWidget):
             MessageButton("确定", "primary", "confirm")
         ]
         message_box = MessageBoxWhite(
-            title="确认操作",
+            title="确认消息框",
             message="确定要执行此操作吗？",
             buttons=buttons,
             icon="help",
@@ -251,4 +307,4 @@ class ExamplePage(QWidget):
                 
         # 更新通知文本
         if hasattr(self, 'notice'):
-            self.notice.update_message(i18n.get_text("long_notice"))
+            self.notice.update_message(i18n.get_text("example_notice"))

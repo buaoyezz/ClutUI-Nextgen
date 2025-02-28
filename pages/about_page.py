@@ -24,8 +24,8 @@ class AboutPage(QWidget):
         
         self.setup_ui()
         
-        # 注册语言变更回调
-        i18n.add_language_change_callback(self.update_text)
+        # 连接语言变更信号
+        i18n.language_changed.connect(self.update_text)
         
     def setup_ui(self):
         # 创建一个容器来包裹滚动区域
@@ -34,6 +34,87 @@ class AboutPage(QWidget):
         scroll_container_layout = QVBoxLayout(scroll_container)
         scroll_container_layout.setContentsMargins(0, 0, 0, 0)
         
+        # 设置全局样式
+        self.setStyleSheet("""
+            QWidget#scrollContainer {
+                background: transparent;
+                margin: 0px 20px;
+            }
+            
+            QScrollArea#scrollArea {
+                background: transparent;
+                border: none;
+            }
+            
+            QWidget#container {
+                background: transparent;
+            }
+            
+            QLabel {
+                color: #1F2937;
+                background: transparent;
+                font-size: 14px;
+                letter-spacing: 0.3px;
+            }
+            
+            QLabel[class="title"] {
+                font-size: 24px;
+                font-weight: 600;
+                color: #1F2937;
+            }
+            
+            QLabel[class="subtitle"] {
+                font-size: 18px;
+                font-weight: 500;
+                color: #2196F3;
+            }
+            
+            QLabel[class="version"] {
+                font-size: 13px;
+                color: #666666;
+            }
+            
+            QLabel[class="description"] {
+                font-size: 14px;
+                color: #666666;
+                line-height: 1.6;
+            }
+            
+            QLabel[class="copyright"] {
+                font-size: 12px;
+                color: #9E9E9E;
+            }
+            
+            /* 自定义滚动条样式 */
+            QScrollBar:vertical {{
+                background: transparent;
+                width: 8px;
+                margin: 4px 4px 4px 4px;
+            }}
+            
+            QScrollBar::handle:vertical {{
+                background: #C0C0C0;
+                border-radius: 4px;
+                min-height: 30px;
+            }}
+            
+            QScrollBar::handle:vertical:hover {{
+                background: #A0A0A0;
+            }}
+            
+            QScrollBar::add-line:vertical {{
+                height: 0px;
+            }}
+            
+            QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+            
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: transparent;
+            }}
+        """)
+        
         # 设置滚动区域
         scroll_area = QScrollArea()
         self.scroll_area = scroll_area
@@ -41,6 +122,9 @@ class AboutPage(QWidget):
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         scroll_area.setObjectName("scrollArea")
+        
+        # 应用滚动条样式
+        ScrollStyle.apply_to_widget(scroll_area)
         
         # 设置滚动条动画
         self.scroll_animation = ScrollBarAnimation(scroll_area.verticalScrollBar())
@@ -166,57 +250,6 @@ class AboutPage(QWidget):
         
         # 将滚动容器添加到主布局
         self.layout.addWidget(scroll_container)
-        
-        # 更新样式表
-        self.setStyleSheet(f"""
-            QWidget#scrollContainer {{
-                background: transparent;
-                margin: 0px 20px;
-            }}
-            
-            QScrollArea#scrollArea {{
-                background: transparent;
-                border: none;
-            }}
-            
-            QWidget#container {{
-                background: transparent;
-            }}
-            
-            QLabel {{
-                color: #1F2937;
-                background: transparent;
-            }}
-            
-            /* 自定义滚动条样式 */
-            QScrollBar:vertical {{
-                background: transparent;
-                width: 8px;
-                margin: 4px 4px 4px 4px;
-            }}
-            
-            QScrollBar::handle:vertical {{
-                background: #C0C0C0;
-                border-radius: 4px;
-                min-height: 30px;
-            }}
-            
-            QScrollBar::handle:vertical:hover {{
-                background: #A0A0A0;
-            }}
-            
-            QScrollBar::add-line:vertical {{
-                height: 0px;
-            }}
-            
-            QScrollBar::sub-line:vertical {{
-                height: 0px;
-            }}
-            
-            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
-                background: transparent;
-            }}
-        """)
 
     def show_notification(self):
         try:

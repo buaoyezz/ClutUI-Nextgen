@@ -25,8 +25,8 @@ class LogPage(QWidget):
         self.update_timer.timeout.connect(self.check_logs_update)
         self.update_timer.start(2000)  # 改为2秒检查一次
         
-        # 注册语言变更回调
-        i18n.add_language_change_callback(self.update_text)
+        # 连接语言变更信号
+        i18n.language_changed.connect(self.update_text)
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -36,6 +36,15 @@ class LogPage(QWidget):
         # 标题
         self.title_label = QLabel(i18n.get_text("system_log"))
         self.font_manager.apply_title_style(self.title_label)  # 应用标题字体
+        self.title_label.setStyleSheet("""
+            QLabel {
+                color: #1F2937;
+                background: transparent;
+                font-size: 24px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+            }
+        """)
         layout.addWidget(self.title_label)
 
         # 搜索栏样式优化
@@ -50,6 +59,10 @@ class LogPage(QWidget):
                 border-radius: 5px;
                 font-size: 13px;
                 background: white;
+                letter-spacing: 0.2px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #2196F3;
             }
         """)
         self.search_input.textChanged.connect(self.search_logs)  # 改为实时搜索

@@ -10,6 +10,7 @@ from core.utils.notif import Notification, NotificationType
 from core.font.font_pages_manager import FontPagesManager
 from core.ui.little_card2 import LittleCard2
 from core.i18n import i18n
+from core.utils.yiyanapi import YiyanAPI
 
 class InfoCard(QFrame):
     clicked = Signal(str)
@@ -32,6 +33,9 @@ class InfoCard(QFrame):
             QLabel {
                 color: #333333;
                 background: transparent;
+                font-size: 16px;
+                font-weight: 500;
+                letter-spacing: 0.3px;
             }
         """)
         
@@ -42,6 +46,9 @@ class InfoCard(QFrame):
             QLabel {
                 color: #2196F3;
                 background: transparent;
+                font-size: 15px;
+                font-weight: 500;
+                letter-spacing: 0.3px;
             }
         """)
         
@@ -52,6 +59,8 @@ class InfoCard(QFrame):
             QLabel {
                 color: #666666;
                 background: transparent;
+                font-size: 13px;
+                letter-spacing: 0.2px;
             }
         """)
         
@@ -96,6 +105,7 @@ class QuickStartPage(QWidget):
         super().__init__(parent)
         self.info_cards = {}
         self.font_manager = FontPagesManager()
+        self.yiyan_api = YiyanAPI()
         
         # 创建主布局
         self.layout = QVBoxLayout(self)
@@ -104,8 +114,8 @@ class QuickStartPage(QWidget):
         
         self.setup_ui()
         
-        # 注册语言变更回调
-        i18n.add_language_change_callback(self.update_text)
+        # 连接语言变更信号
+        i18n.language_changed.connect(self.update_text)
 
     def setup_ui(self):
         # 顶部标题
@@ -113,23 +123,32 @@ class QuickStartPage(QWidget):
         self.font_manager.apply_font(main_title, "title")  # 应用标题字体
         main_title.setStyleSheet("""
             QLabel {
-                color: rgba(51, 51, 51, 0.85); 
+                color: #1F2937;
+                background: transparent;
+                font-size: 36px;
+                font-weight: 600;
                 letter-spacing: 1px;
+                padding: 20px 0;
             }
         """)
         main_title.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(main_title)
         
         # 说明文本
-        description = QLabel("")
+        hitokoto = self.yiyan_api.get_hitokoto_sync()
+        description = QLabel(f"{hitokoto}")
         self.font_manager.apply_font(description, "normal")  # 应用普通字体
         description.setStyleSheet("""
             QLabel {
-                color: rgba(102, 102, 102, 0.85);
+                color: #666666;
+                background: transparent;
+                font-size: 15px;
                 line-height: 24px;
+                letter-spacing: 0.3px;
             }
         """)
         description.setAlignment(Qt.AlignCenter)
+        description.setWordWrap(True)  # 启用自动换行
         self.layout.addWidget(description)
         
         self.layout.addSpacing(40)
@@ -138,22 +157,22 @@ class QuickStartPage(QWidget):
         cards_config = [
             {
                 "title": "Pyside6 Link",
-                "description": "官方文档",
+                "description": i18n.get_text("official_doc"),
                 "link_url": "https://doc.qt.io/qtforpython-6/"
             },
             {
                 "title": "Python Link",
-                "description": "Python官网",
+                "description": i18n.get_text("python_official"),
                 "link_url": "https://www.python.org/"
             },
             {
                 "title": "Clut UI Link",
-                "description": "项目仓库",
+                "description": i18n.get_text("project_repo"),
                 "link_url": "https://github.com/buaoyezz/ClutUI-Nextgen"
             },
             {
                 "title": "ZZBUAOYE Link",
-                "description": "作者主页",
+                "description": i18n.get_text("author_page"),
                 "link_url": "https://github.com/buaoyezz"
             }
         ]
