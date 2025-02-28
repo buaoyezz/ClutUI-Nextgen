@@ -3,16 +3,21 @@
 '''
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtGui import QIcon, QWindow
 from core.utils.initialization_manager import InitializationManager
 from core.log.log_manager import log
 from core.utils.notif import Notification, NotificationType
 from core.ui.title_bar import TitleBar
 from core.window.window_manager import WindowManager
 from core.i18n import i18n
+from core.pages_core.pages_effect import PagesEffect
+from core.utils.resource_manager import ResourceManager
+from core.utils.yiyanapi import YiyanAPI
 import sys
 import os
+import json
+import ctypes
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -23,9 +28,29 @@ class MainWindow(QMainWindow):
         log.info(i18n.get_text("init_window"))
         
         # 设置应用图标
-        icon = QIcon("resources/logo.png")
-        self.setWindowIcon(icon)
-        QApplication.setWindowIcon(icon)
+        resource_manager = ResourceManager()
+        icon = resource_manager.get_icon("logo")
+        if icon:
+            # 设置窗口图标
+            self.setWindowIcon(icon)
+            QApplication.setWindowIcon(icon)
+            
+            # 设置任务栏图标
+            if os.name == 'nt':  # Windows系统
+                try:
+                    # 获取窗口句柄
+                    hwnd = self.winId().__int__()
+                    
+                    # 加载图标文件
+                    icon_path = resource_manager.get_resource_path(os.path.join("resources", "logo.png"))
+                    if os.path.exists(icon_path):
+                        # 设置任务栏图标
+                        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ClutUI.Nextgen")
+                        log.info("成功设置任务栏图标")
+                except Exception as e:
+                    log.error(f"设置任务栏图标失败: {str(e)}")
+            
+            log.info("成功加载应用图标")
         
         # 设置窗口基本属性
         self.setWindowTitle(i18n.get_text("app_title", "ClutUI Nextgen"))
@@ -42,6 +67,9 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout(main_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
+        
+        # 先隐藏主窗口部件，避免初始化时的闪烁
+        main_widget.hide()
         
         self.title_bar = TitleBar(self)
         self.title_bar.title_label.setText(i18n.get_text("app_title_full", "ClutUI Next Generation"))
@@ -90,21 +118,77 @@ class MainWindow(QMainWindow):
         self._cleanup_timer.timeout.connect(self._finish_close)
         self._notifications = []
         
-        # 注册语言变更回调
-        i18n.add_language_change_callback(self._on_language_changed)
+        # 连接语言变更信号
+        i18n.language_changed.connect(self._on_language_changed)
+        
+        # 预先应用一次模糊效果
+        PagesEffect.apply_blur_effect(self)
+        
+        # 使用QTimer延迟应用背景效果并显示窗口
+        QTimer.singleShot(50, self._init_background_effect)
+        
+        # 异步加载一言并显示欢迎通知
+        self._show_welcome_notification()
 
-    def _on_language_changed(self):
+    def _show_welcome_notification(self):
+        self.yiyan_api = YiyanAPI()
+        # 连接信号
+        self.yiyan_api.hitokoto_ready.connect(
+            lambda text: self.show_notification(
+                text=text,
+                type=NotificationType.TIPS,
+                duration=3000
+            )
+        )
+        # 开始异步获取
+        initial_text = self.yiyan_api.get_hitokoto_async()
+        # 显示初始通知
+        self.show_notification(
+            text=initial_text,
+            type=NotificationType.TIPS,
+            duration=3000
+        )
+
+    def _init_background_effect(self):
+        try:
+            with open('config.json', 'r') as f:
+                config = json.loads(f.read())
+                effect = config.get('background_effect', 'effect_none')
+                
+                if effect == 'effect_none':
+                    PagesEffect.remove_effects(self)
+                elif effect == 'effect_mica':
+                    PagesEffect.apply_mica_effect(self)
+                elif effect == 'effect_gaussian':
+                    PagesEffect.apply_gaussian_blur(self)
+                elif effect == 'effect_blur':
+                    PagesEffect.apply_blur_effect(self)
+        except:
+            # 如果配置读取失败，默认使用无效果
+            PagesEffect.remove_effects(self)
+        
+        # 显示主窗口部件
+        self.centralWidget().show()
+
+    def _apply_saved_background_effect(self):
+        self._init_background_effect()
+
+    def _on_language_changed(self, lang=None):
         self.setWindowTitle(i18n.get_text("app_title", "ClutUI Nextgen"))
         self.title_bar.title_label.setText(i18n.get_text("app_title_full", "ClutUI Next Generation"))
         # 通知页面管理器更新所有页面的文本
         self.pages_manager.update_all_pages_text()
 
-    def closeEvent(self, event):
-        WindowManager.handle_close_event(self, event)
-
     def _finish_close(self):
         WindowManager.finish_close(self)
-        i18n.remove_language_change_callback(self._on_language_changed)
+        # 断开信号连接
+        try:
+            i18n.language_changed.disconnect(self._on_language_changed)
+        except:
+            pass
+
+    def closeEvent(self, event):
+        WindowManager.handle_close_event(self, event)
 
     def switch_page(self, page_name):
         WindowManager.switch_page(self, page_name)
@@ -129,15 +213,7 @@ if __name__ == '__main__':
         window.show()
         log.info(i18n.get_text("app_started"))
         
-        notification = Notification(
-            text=i18n.get_text("welcome_notification"),
-            type=NotificationType.TIPS,
-            parent=window
-        )
-        notification.show_notification()
-        
         exit_code = app.exec()
-        window._finish_close()
         sys.exit(exit_code)
         
     except Exception as e:
