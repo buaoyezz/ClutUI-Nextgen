@@ -136,5 +136,16 @@
     "disabled": "disabled",
     "auto_save": "auto_save",
     "auto_save_desc": "auto_save_desc",
-    "auto_save_error": "auto_save_error"
+    "auto_save_error": "auto_save_error",
+    "quick_start_description": "quick_start_description",
+    "example_notice": "example_notice",
+    "expandable": "expandable",
+    "expandable_notice": "expandable_notice",
+    "hitokoto": "hitokoto",
+    "background_effect": "background_effect",
+    "background_effect_desc": "background_effect_desc",
+    "effect_none": "effect_none",
+    "effect_blur": "effect_blur",
+    "effect_mica": "effect_mica",
+    "effect_gaussian": "effect_gaussian"
 } 
