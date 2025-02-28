@@ -11,6 +11,7 @@ from core.font.font_pages_manager import FontPagesManager
 from core.animations.animation_pagemanager import PageAnimationManager
 from pages.example_page import ExamplePage
 from pages.settings_pages import SettingsPage
+from pages.expandable_example import ExpandableExamplePage
 from core.i18n import i18n
 
 class PagesManager(QObject):
@@ -36,6 +37,7 @@ class PagesManager(QObject):
         self.log_page = LogPage()
         self.example_page = ExamplePage()
         self.settings_page = SettingsPage()
+        self.expandable_example_page = ExpandableExamplePage()
         
         # 初始化侧边栏
         self.sidebar = QWidget()
@@ -47,6 +49,7 @@ class PagesManager(QObject):
         self.icons = {
             "quick_start": ('dashboard', i18n.get_text("quick_start")),
             "example": ('auto_awesome', i18n.get_text("example")),
+            "expandable": ('expand_more', i18n.get_text("expandable")),
             "log": ('article', i18n.get_text("log")),
             "about": ('info', i18n.get_text("about")),
             "settings": ('settings', i18n.get_text("settings"))
@@ -61,6 +64,7 @@ class PagesManager(QObject):
         # 添加按钮到布局
         self.sidebar_layout.addWidget(self.buttons["quick_start"])
         self.sidebar_layout.addWidget(self.buttons["example"])
+        self.sidebar_layout.addWidget(self.buttons["expandable"])
         self.sidebar_layout.addStretch(1)
         self.sidebar_layout.addWidget(self.buttons["log"])
         self.sidebar_layout.addWidget(self.buttons["about"])
@@ -70,6 +74,7 @@ class PagesManager(QObject):
         self.pages = {
             "quick_start": self.quick_start_page,
             "example": self.example_page,
+            "expandable": self.expandable_example_page,
             "log": self.log_page,
             "about": self.about_page,
             "settings": self.settings_page
@@ -85,8 +90,8 @@ class PagesManager(QObject):
         self.current_page = "quick_start"
         self.page_animation_manager.create_button_click_animation(self.buttons["quick_start"])
         
-        # 注册语言变化处理
-        i18n.add_language_change_callback(self.update_all_pages_text)
+        # 连接语言变更信号
+        i18n.language_changed.connect(self.update_all_pages_text)
         
         log.info(i18n.get_text("init_page_manager"))
     
@@ -116,9 +121,11 @@ class PagesManager(QObject):
         text_label.setObjectName(f"text_{key}")
         default_font = self.font_pages_manager.setFont("HarmonyOS Sans SC", size=14)
         text_label.setFont(default_font)
+        text_label.setWordWrap(True)  # 启用自动换行
         text_label.setStyleSheet("""
             QLabel {
                 color: #333333;
+                padding: 5px 0;
             }
         """)
         layout.addWidget(text_label)
@@ -128,8 +135,8 @@ class PagesManager(QObject):
         container.setLayout(layout)
         
         # 设置按钮样式和属性
-        btn.setFixedHeight(40)
         btn.setFixedWidth(150)
+        btn.setMinimumHeight(40)  # 改为最小高度而不是固定高度
         btn.setCheckable(True)
         btn.clicked.connect(lambda: self.switch_page(key))
         

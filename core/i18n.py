@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Dict, List, Optional, Callable
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, QEvent, QCoreApplication
 
 class I18nManager(QObject):
     language_changed = Signal(str)  # 语言变更信号
@@ -10,8 +10,6 @@ class I18nManager(QObject):
     _current_language = 'zh'
     _fallback_language = 'en'
     _translations: Dict[str, Dict[str, str]] = {}
-    _callbacks: List[Callable] = []
-    _is_notifying = False  # 添加标志位防止递归
     
     def __new__(cls):
         if cls._instance is None:
@@ -45,9 +43,16 @@ class I18nManager(QObject):
             return
             
         if self._current_language != lang:
+            # 清理所有通知
+            from core.utils.notif import Notification
+            Notification.clear_all_notifications()
+            
             self._current_language = lang
-            if not self._is_notifying:
-                self._notify_language_change()
+            # 发送Qt语言变更事件
+            event = QEvent(QEvent.LanguageChange)
+            QCoreApplication.sendEvent(QCoreApplication.instance(), event)
+            # 发送自定义信号
+            self.language_changed.emit(lang)
     
     def get_text(self, key: str, *args, **kwargs) -> str:
         try:
@@ -64,30 +69,5 @@ class I18nManager(QObject):
             except (IndexError, KeyError):
                 return text
         return text
-    
-    def add_language_change_callback(self, callback: Callable):
-        if callback not in self._callbacks:
-            self._callbacks.append(callback)
-    
-    def remove_language_change_callback(self, callback: Callable):
-        if callback in self._callbacks:
-            self._callbacks.remove(callback)
-    
-    def _notify_language_change(self):
-        if self._is_notifying:
-            return
-            
-        try:
-            self._is_notifying = True
-            # 先发送信号
-            self.language_changed.emit(self._current_language)
-            # 再调用回调函数
-            for callback in self._callbacks[:]:  # 创建副本避免在迭代时修改
-                try:
-                    callback()
-                except Exception as e:
-                    print(f"Error in language change callback: {e}")
-        finally:
-            self._is_notifying = False
 
 i18n = I18nManager() 

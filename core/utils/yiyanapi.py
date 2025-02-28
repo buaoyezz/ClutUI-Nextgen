@@ -1,47 +1,75 @@
 import requests
 import random
 from core.log.log_manager import log
+from core.thread.thread_manager import thread_manager
+from typing import Callable
+from PySide6.QtCore import QObject, Signal
 
-class YiyanAPI:
+class YiyanAPI(QObject):
+    # 定义信号
+    hitokoto_ready = Signal(str)
+    
     def __init__(self):
+        super().__init__()
         # 备用的一言列表，当API请求失败时使用 
         self.fallback_quotes = [
-            "生活就像一盒巧克力，你永远不知道下一颗是什么味道",
-            "保持简单，保持整洁",
-            "整理空间，整理心情", 
-            "让我们一起开始清理之旅吧",
-            "干净整洁的环境，清晰的思维",
-            "收拾房间，收拾心情",
-            "整洁的环境，美好的心情",
-            "让生活更轻松一点",
-            "为美好生活增添一份整洁",
-            "从清理开始，让生活更美好"
+            "ClutUI Nextgen Welcome ",
+            "冷知识: ClutUI Nextgen 支持多种背景的效果",
+            "冷知识: ClutUI Nextgen 支持开启自启动设置啦",
+            "冷知识: ClutUI Nextgen 支持多种语言啦",
         ]
+        
+    def get_hitokoto_async(self):
+        """异步获取一言"""
+        def fetch_hitokoto():
+            result = self.get_hitokoto_sync()
+            # 使用信号发送结果到主线程
+            self.hitokoto_ready.emit(result)
+            
+        # 使用线程管理器提交任务
+        thread_manager.submit_task("fetch_hitokoto", fetch_hitokoto)
+        
+        # 立即返回一个临时的一言
+        return random.choice(self.fallback_quotes)
         
     def get_hitokoto_sync(self):
         # 获取一言，如果API失败则返回备用语句 
         try:
             # 添加请求头 
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'X-User': 'Clut-Cleaner'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Connection': 'keep-alive',
+                'X-User': 'ClutUI-Nextgen'
             }
             
-            # 随机选择API 
             apis = [
                 ('https://v1.hitokoto.cn/', lambda r: r.json()['hitokoto']),
+                ('https://api.oick.cn/yiyan/api.php', lambda r: r.json()['text']),
+                ('https://api.apiopen.top/api/sentences', lambda r: r.json()['result']['name']),
                 ('https://v1.jinrishici.com/all.json', lambda r: r.json()['content'])
             ]
-            api_url, parse_func = random.choice(apis)
             
-            # 使用timeout参数避免请求卡住 
-            response = requests.get(api_url, headers=headers, timeout=3)
+            random.shuffle(apis)
             
-            if response.status_code == 200:
-                return parse_func(response)
-            else:
-                log.warning(f"API返回状态码: {response.status_code}")
-                return random.choice(self.fallback_quotes)
+            for api_url, parse_func in apis:
+                try:
+                    response = requests.get(api_url, headers=headers, timeout=3)
+                    
+                    if response.status_code == 200:
+                        return parse_func(response)
+                    else:
+                        log.warning(f"API {api_url} 返回状态码: {response.status_code}")
+                        continue
+                        
+                except Exception as e:
+                    log.warning(f"API {api_url} 请求失败: {str(e)}")
+                    continue
+            
+            # 如果所有API都失败了，返回备用语句
+            log.warning("所有API请求都失败了，使用备用语句")
+            return random.choice(self.fallback_quotes)
                 
         except Exception as e:
             log.error(f"获取一言/诗词失败: {str(e)}")

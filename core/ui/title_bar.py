@@ -5,6 +5,7 @@ import os
 import sys
 from core.font.font_manager import FontManager
 from core.log.log_manager import log
+from core.utils.resource_manager import ResourceManager
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
@@ -24,19 +25,12 @@ class TitleBar(QWidget):
         
         # 添加logo
         self.logo_label = QLabel()
-        try:
-            logo_path = resource_path("resources/logo.png")
-            logo_pixmap = QPixmap(logo_path)
-            if logo_pixmap.isNull():
-                log.error(f"无法加载logo图片: {logo_path}")
-            else:
-                # 调整logo尺寸为20x20
-                scaled_pixmap = logo_pixmap.scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.logo_label.setPixmap(scaled_pixmap)
-                self.logo_label.setFixedSize(20, 20)
-                log.info(f"成功加载logo: {logo_path}")
-        except Exception as e:
-            log.error(f"加载logo时出错: {str(e)}")
+        resource_manager = ResourceManager()
+        logo_pixmap = resource_manager.get_pixmap("logo", size=(20, 20))
+        if logo_pixmap:
+            self.logo_label.setPixmap(logo_pixmap)
+            self.logo_label.setFixedSize(20, 20)
+            log.info("成功加载标题栏logo")
             
         layout.addWidget(self.logo_label)
         

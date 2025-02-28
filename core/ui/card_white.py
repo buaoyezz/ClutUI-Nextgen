@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QFrame, QLabel, QVBoxLayout, QGraphicsDropShadowEffect, 
-                             QHBoxLayout, QWidget, QPushButton)
+                             QHBoxLayout, QWidget, QPushButton, QSizePolicy)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 from core.font.font_manager import FontManager
@@ -26,8 +26,8 @@ class CardWhite(QFrame):
         
         self.setup_ui()
         
-        # 注册语言变更回调
-        i18n.add_language_change_callback(self.update_text)
+        # 连接语言变更信号
+        i18n.language_changed.connect(self.update_text)
         
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -53,6 +53,7 @@ class CardWhite(QFrame):
         self.title_label.setWordWrap(True)
         self.title_label.setTextFormat(Qt.PlainText)
         self.font_pages_manager.apply_normal_style(self.title_label)
+        self.title_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
         
         # 设置标题
         title_text = self.format_title(self.title)
@@ -82,15 +83,17 @@ class CardWhite(QFrame):
         
         # 描述文字容器
         description_container = QWidget()
-        description_layout = QVBoxLayout(description_container)
-        description_layout.setContentsMargins(26, 4, 0, 0)
-        description_layout.setSpacing(4)
+        description_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
+        self.description_layout = QVBoxLayout(description_container)
+        self.description_layout.setContentsMargins(26, 4, 0, 0)
+        self.description_layout.setSpacing(4)
         
         # 描述文字
         self.description_label = QLabel(self.description)
         self.description_label.setWordWrap(True)
         self.description_label.setTextFormat(Qt.PlainText)
         self.font_pages_manager.apply_normal_style(self.description_label)
+        self.description_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
         self.description_label.setStyleSheet("""
             background: transparent;
             padding: 0px;
@@ -139,8 +142,8 @@ class CardWhite(QFrame):
         expand_layout.addWidget(self.expand_button)
         expand_layout.addStretch()
         
-        description_layout.addWidget(self.description_label)
-        description_layout.addWidget(expand_container)
+        self.description_layout.addWidget(self.description_label)
+        self.description_layout.addWidget(expand_container)
         expand_container.hide()
         self.expand_container = expand_container
         
@@ -150,6 +153,9 @@ class CardWhite(QFrame):
         # 添加主要布局
         layout.addLayout(title_container)
         layout.addWidget(description_container)
+        
+        # 设置卡片大小策略
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
         
         # 只在需要时添加操作按钮
         if self.show_actions:
@@ -210,6 +216,7 @@ class CardWhite(QFrame):
                 border-radius: 12px;
                 border: 1px solid #E0E0E0;
                 max-width: 850px;
+                min-height: 20px;
             }
             CardWhite:hover {
                 border: 1px solid #2196F3;
@@ -296,6 +303,7 @@ class CardWhite(QFrame):
                 border-radius: 12px;
                 border: 1px solid #E0E0E0;
                 max-width: 850px;
+                min-height: 20px;
             }
             CardWhite:hover {
                 border: 1px solid #2196F3;
@@ -432,4 +440,11 @@ class CardWhite(QFrame):
             for action in self.actions_to_use:
                 if 'text_label' in action and 'key' in action:
                     action['text_label'].setText(i18n.get_text(action['key']))
+        
+    def add_custom_widget(self, widget):
+        """添加自定义组件到卡片中"""
+        if hasattr(self, 'description_layout'):
+            # 将组件插入到描述文字和展开按钮之间
+            index = self.description_layout.indexOf(self.description_label) + 1
+            self.description_layout.insertWidget(index, widget)
         

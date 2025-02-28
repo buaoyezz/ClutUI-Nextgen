@@ -33,8 +33,8 @@ class QSwitch(QWidget):
         # 设置工具提示
         self.update_tooltip()
         
-        # 注册语言变更回调
-        i18n.add_language_change_callback(self.update_text)
+        # 连接语言变更信号
+        i18n.language_changed.connect(self.update_text)
         
     def update_text(self):
         self.update_tooltip()
