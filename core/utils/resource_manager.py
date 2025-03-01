@@ -32,7 +32,6 @@ class ResourceManager:
         return os.path.join(base_path, relative_path)
     
     def get_icon(self, name, cache=True):
-        """获取图标，优先使用 ICO 格式，如果不存在则使用 PNG"""
         if cache and name in self._cache:
             return self._cache[name]
         
@@ -99,5 +98,4 @@ class ResourceManager:
         return pixmap
     
     def clear_cache(self):
-        """清除缓存"""
         self._cache.clear() 

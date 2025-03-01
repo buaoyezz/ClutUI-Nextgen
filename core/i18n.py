@@ -1,8 +1,10 @@
 import json
 import os
+import sys
 from typing import Dict, List, Optional, Callable
 from PySide6.QtCore import QObject, Signal, QEvent, QCoreApplication
 from core.log.log_manager import log
+from core.utils.resource_manager import ResourceManager
 
 class I18nManager(QObject):
     language_changed = Signal()
@@ -12,11 +14,12 @@ class I18nManager(QObject):
         self.current_language = "en"
         self.translations = {}
         self.base_translations = {}
+        self.resource_manager = ResourceManager()
         self.load_base_translations()
         
     def load_base_translations(self):
         try:
-            base_path = os.path.join("locales", "base.json")
+            base_path = ResourceManager.get_resource_path(os.path.join("locales", "base.json"))
             if os.path.exists(base_path):
                 with open(base_path, 'r', encoding='utf-8') as f:
                     self.base_translations = json.load(f)
@@ -31,7 +34,7 @@ class I18nManager(QObject):
             
     def load_language(self, language):
         try:
-            lang_path = os.path.join("locales", f"{language}.json")
+            lang_path = ResourceManager.get_resource_path(os.path.join("locales", f"{language}.json"))
             if os.path.exists(lang_path):
                 with open(lang_path, 'r', encoding='utf-8') as f:
                     lang_translations = json.load(f)
