@@ -155,7 +155,7 @@ class AboutPage(QWidget):
         self.subtitle.setAlignment(Qt.AlignCenter)
         container_layout.addWidget(self.subtitle)
         
-        self.version = QLabel("Version 0.0.6 Alpha")
+        self.version = QLabel(i18n.get_text("version"))
         self.font_manager.apply_small_style(self.version)
         self.version.setAlignment(Qt.AlignCenter)
         container_layout.addWidget(self.version)
@@ -167,9 +167,9 @@ class AboutPage(QWidget):
         
         # 按钮配置
         self.buttons_data = [
-            ("changelog", "https://github.com/buaoyezz/ClutUI-Nextgen/releases", "history"),
-            ("documentation", "https://zzbuaoye.us.kg/clutui/docs/", "article"),
-            ("source_code", "https://github.com/buaoyezz/ClutUI-Nextgen", "code"),
+            ("changelog", i18n.get_text("urls.changelog"), "history"),
+            ("documentation", i18n.get_text("urls.documentation"), "article"),
+            ("source_code", i18n.get_text("urls.source_code"), "code"),
         ]
         
         self.main_buttons = []  # 存储主要按钮引用
@@ -219,8 +219,8 @@ class AboutPage(QWidget):
         legal_buttons.setSpacing(15)
         
         self.legal_buttons_data = [
-            ("license", "https://zzbuaoye.us.kg/clutui/font/license.txt", "gavel"),
-            ("related_terms", "https://zzbuaoye.us.kg/clutui/statement.txt", "shield"),
+            ("license", i18n.get_text("urls.license"), "gavel"),
+            ("related_terms", i18n.get_text("urls.related_terms"), "shield"),
         ]
         
         self.legal_buttons = []  # 存储法律按钮引用
