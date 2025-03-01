@@ -40,6 +40,12 @@
 - [Fluent Design文档](https://docs.microsoft.com/en-us/windows/apps/design/style/color)
 - [Google Material Design文档](https://material.io/design)
 - [Google Icons](https://fonts.google.com/icons)
+- [Numpy](https://numpy.org/doc/)
+- [Pyinstaller](https://pyinstaller.org/en/stable/)
+- [Pillow](https://pillow.readthedocs.io/en/stable/)
+- [Python](https://www.python.org/)
+- [Requests](https://requests.readthedocs.io/en/latest/)
+- [Hitokoto](https://hitokoto.cn/api)
 
 
 ## 🤝 参与贡献
@@ -66,40 +72,13 @@
 - 然后运行`python ClutUI_Nextgen_Main.py`即可
 
 ## 📦 打包指南
-- 先安装PyInstaller最新版
-```batch
-REM 更新pip
-pip install --upgrade pip
-REM 安装PyInstaller,Pillow
-pip install Pyinstaller 
-pip install Pillow
-REM 更新PyInstaller,Pillow
-pip install --upgrade pyinstaller
-pip install --upgrade Pillow
-```
-- 然后使用PyInstaller打包
-- 指令如下请在ClutUI_Nextgen_Main.py同级目录下执行
-```batch
-REM 0.0.8 版本适配
-REM 修正了新的项目格式
-pyinstaller --noconfirm --onefile --windowed --icon="resources/logo.png" ^
---add-data="core/font/icons/MaterialIcons-Regular.ttf;core/font/icons" ^
---add-data="core/font/icons/codepoints;core/font/icons" ^
---add-data="core/font/icons/statement.txt;core/font/icons" ^
---add-data="core/font/font/HarmonyOS_Sans_SC_Bold.ttf;core/font/font" ^
---add-data="core/font/font/HarmonyOS_Sans_SC_Regular.ttf;core/font/font" ^
---add-data="core/font/font/Mulish-Bold.ttf;core/font/font" ^
---add-data="core/font/font/Mulish-Regular.ttf;core/font/font" ^
---add-data="locales;locales" ^
---add-data="core;core" ^
---add-data="pages;pages" ^
---add-data="preview;preview" ^
---add-data="resources;resources" ^
---add-data="FontLicense;FontLicense" ^
---add-data="config.json;." ^
---name="ClutUI_Nextgen" ^
-ClutUI_Nextgen_Main.py
-```- 打包后运行`dist`下的`ClutUI_Nextgen_Main.exe`即可
+- 获取[ClutUI_NextGen_BuildTools.bat](https://github.com/buaoyezz/ClutUI-Nextgen/blob/main/ClutUI_NextGen_BuildTools.bat)
+- Tips: 本脚本不会自动按照项目所需库，但是会自动安装Pyinstaller以及Pillow
+- 下载完成后,将`ClutUI_NextGen_BuildTools.bat`复制到你目录下与`ClutUI_Nextgen_Main.py`同级
+- 直接运行`ClutUI_NextGen_BuildTools.bat`
+- 等待程序编译完成
+- 然后运行`dist`下的`ClutUI_Nextgen_Main.exe`即可
+
 
 ## 📦 Icons Map
 - 预先打开`core` -> `font`目录
@@ -108,22 +87,6 @@ ClutUI_Nextgen_Main.py
 - Tips: 请不要手动修改`icon_map.py`内的内容，否则会导致图标无法显示，除非你知道你在做什么
 > 当然你可以选择直接使用我预先生成的`icon_map.py`文件，他是原版的我并没有修改任何内容
 
-
-## ✨ 对比1.0 / NextGen提升了什么
-> 1.0特性
-- 基于PyQt5开发的
-- 存在众多bug和体验上的不适
-- 没有自带的日志面板
-- 没任何出色的设计
-- 项目结构混乱
-- 兼容性差
-> NextGen特性
-- 基于Pyside6开发的，所以2.0版本在性能上比1.0版本更加优秀
-- 在设计上更为现代化，亮色主题和只能亮暗色文字带来更好的观感
-- 日志功能集成进了核心能力中，可以实时监控和统计日志
-- 采用Google Material Design的Icons给用户带来更好的体验
-- 项目结构清晰，易于维护和扩展
-- 项目为MIT协议，并且采用Google Material Design的Icons，这将会让项目更为易用免去了绘制图标的烦恼
 
 ## ❤️ LICENSE INFO AND THANKS TO:
 - LGPL   Pyside6                © 2025 Qt Company | PySide6 
