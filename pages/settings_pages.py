@@ -37,20 +37,22 @@ class SettingsPage(QWidget):
         current_language = self.settings.get('language', 'zh')
         i18n.set_language(current_language)
         
-        # 语言显示映射
+        # 初始化背景效果映射
+        self.background_effects = {
+            "effect_none": i18n.get_text("effect_none", "无效果"),
+            "effect_mica": i18n.get_text("effect_mica", "云母效果"),
+            "effect_gaussian": i18n.get_text("effect_gaussian", "高斯模糊"),
+            "effect_blur": i18n.get_text("effect_blur", "模糊效果"),
+            "effect_acrylic": i18n.get_text("effect_acrylic", "亚克力效果"),
+            "effect_aero": i18n.get_text("effect_aero", "Aero玻璃效果")
+        }
+        
+        # 初始化语言显示映射
         self.lang_display = {
             "zh": i18n.get_text("lang_zh"),
             "en": i18n.get_text("lang_en"),
             "zh_hk": i18n.get_text("lang_zh_hk"),
             "origin": i18n.get_text("lang_origin")
-        }
-        
-        # 背景效果映射
-        self.bg_effects = {
-            "effect_none": i18n.get_text("effect_none"),
-            "effect_gaussian": i18n.get_text("effect_gaussian"),
-            "effect_mica": i18n.get_text("effect_mica"),
-            "effect_blur": i18n.get_text("effect_blur")
         }
         
         # 反向映射
@@ -65,6 +67,11 @@ class SettingsPage(QWidget):
         self.save_button = None
         self.startup_switch = None
         self.auto_save_switch = None
+        self.scroll_area = None
+        self.scroll_animation = None
+        self.save_path_edit = None
+        self.font_size_slider = None
+        self.font_size_value = None
         
         # 先创建UI
         self._init_ui()
@@ -230,6 +237,7 @@ class SettingsPage(QWidget):
         
         # 标题
         title_label = QLabel(i18n.get_text("settings"))
+        title_label.setObjectName("title_label")
         self.font_manager.apply_title_style(title_label)
         container_layout.addWidget(title_label)
         
@@ -372,18 +380,21 @@ class SettingsPage(QWidget):
         
         # 语言设置
         language_group = self._create_group_box(i18n.get_text("language_settings"))
+        language_group.setObjectName("language_group")
         language_layout = QVBoxLayout()
         language_layout.setContentsMargins(15, 15, 15, 15)
         language_layout.setSpacing(15)
         
         # 添加语言设置描述
         language_desc = QLabel(i18n.get_text("language_settings_desc"))
+        language_desc.setObjectName("language_desc")
         self.font_manager.apply_normal_style(language_desc)
         language_desc.setWordWrap(True)
         language_layout.addWidget(language_desc)
         
         language_select_layout = QHBoxLayout()
         language_label = QLabel(i18n.get_text("language"))
+        language_label.setObjectName("language_label")
         self.font_manager.apply_normal_style(language_label)
         self.font_manager.apply_normal_style(self.tab_widget)
         self.language_combo = WhiteComboBox()
@@ -409,6 +420,7 @@ class SettingsPage(QWidget):
         
         # 启动设置
         startup_group = self._create_group_box(i18n.get_text("auto_start"))
+        startup_group.setObjectName("startup_group")
         startup_layout = QVBoxLayout()
         startup_layout.setContentsMargins(15, 15, 15, 15)
         startup_layout.setSpacing(15)
@@ -435,10 +447,12 @@ class SettingsPage(QWidget):
         # 保存路径设置
         save_path_layout = QHBoxLayout()
         save_path_label = QLabel(i18n.get_text("save_path"))
+        save_path_label.setObjectName("save_path_label")
         self.font_manager.apply_normal_style(save_path_label)
         self.save_path_edit = QLineEdit(self.settings.get('save_path', ''))
         self.save_path_edit.setReadOnly(True)
         browse_button = WhiteButton(i18n.get_text("browse"), "folder")
+        browse_button.setObjectName("browse_button")
         browse_button.clicked.connect(self._browse_save_path)
         
         save_path_layout.addWidget(save_path_label)
@@ -447,6 +461,7 @@ class SettingsPage(QWidget):
         
         save_path_layout.addStretch()
         save_path_group = QGroupBox(i18n.get_text("save_path"))
+        save_path_group.setObjectName("save_path_group")
         save_path_group.setLayout(save_path_layout)
         
         # 添加各组到布局
@@ -466,24 +481,27 @@ class SettingsPage(QWidget):
         
         # 背景效果设置
         effect_group = self._create_group_box(i18n.get_text("effect_settings"))
+        effect_group.setObjectName("effect_group")
         effect_layout = QVBoxLayout()
         effect_layout.setContentsMargins(15, 15, 15, 15)
         effect_layout.setSpacing(15)
         
         # 添加描述标签
         effect_desc = QLabel(i18n.get_text("effect_settings_desc"))
+        effect_desc.setObjectName("effect_desc")
         self.font_manager.apply_normal_style(effect_desc)
         effect_desc.setWordWrap(True)
         effect_layout.addWidget(effect_desc)
         
         effect_select_layout = QHBoxLayout()
         effect_label = QLabel(i18n.get_text("effect_type"))
+        effect_label.setObjectName("effect_label")
         self.font_manager.apply_normal_style(effect_label)
         self.effect_combo = WhiteComboBox()
         self.effect_combo.setFixedWidth(200)
         
         # 添加效果选项
-        for effect_code, display_name in self.bg_effects.items():
+        for effect_code, display_name in self.background_effects.items():
             self.effect_combo.addItem(display_name, effect_code)
         
         # 设置当前选择的效果
@@ -502,18 +520,21 @@ class SettingsPage(QWidget):
         
         # 字体设置
         font_group = self._create_group_box(i18n.get_text("font_settings"))
+        font_group.setObjectName("font_group")
         font_layout = QVBoxLayout()
         font_layout.setContentsMargins(20, 20, 20, 20)
         font_layout.setSpacing(20)
         
         # 添加字体设置描述
         font_desc = QLabel(i18n.get_text("font_settings_desc"))
+        font_desc.setObjectName("font_desc")
         self.font_manager.apply_normal_style(font_desc)
         font_desc.setWordWrap(True)
         font_layout.addWidget(font_desc)
         
         font_size_layout = QHBoxLayout()
         font_size_label = QLabel(i18n.get_text("font_size"))
+        font_size_label.setObjectName("font_size_label")
         self.font_manager.apply_normal_style(font_size_label)
         self.font_size_slider = QSlider(Qt.Horizontal)
         self.font_size_slider.setMinimum(10)
@@ -542,24 +563,25 @@ class SettingsPage(QWidget):
         # 将外观设置页面添加到tab_widget
         return appearance_tab
     
+
     def _create_advanced_tab(self):
-        """创建高级选项卡"""
         advanced_tab = QWidget()
         advanced_layout = QVBoxLayout(advanced_tab)
         advanced_layout.setContentsMargins(20, 20, 20, 20)
         advanced_layout.setSpacing(20)
-        
-        # 日志设置组
         log_group = QGroupBox(i18n.get_text("log_settings"))
+        log_group.setObjectName("log_group")
         log_layout = QVBoxLayout(log_group)
         log_layout.setContentsMargins(15, 20, 15, 15)
         log_layout.setSpacing(10)
+        self.font_manager.apply_normal_style(log_group)
         
         # 日志级别选择
         log_level_layout = QHBoxLayout()
-        log_level_label = QLabel(i18n.get_text("log_level"))
+        self.log_level_label = QLabel(i18n.get_text("log_level"))
+        self.log_level_label.setObjectName("log_level_label")
         self.log_level_combo = WhiteComboBox()
-        
+        self.font_manager.apply_normal_style(self.log_level_label)
         # 添加日志级别选项
         log_levels = [
             ("debug", i18n.get_text("log_level_debug")),
@@ -579,14 +601,16 @@ class SettingsPage(QWidget):
                 self.log_level_combo.setCurrentIndex(i)
                 break
                 
-        log_level_layout.addWidget(log_level_label)
+        log_level_layout.addWidget(self.log_level_label)
         log_level_layout.addWidget(self.log_level_combo)
         log_level_layout.addStretch()
+        
         
         log_layout.addLayout(log_level_layout)
         
         # 查看日志按钮
         view_logs_button = WhiteButton(i18n.get_text("view_logs"), "article")
+        view_logs_button.setObjectName("view_logs_button")
         view_logs_button.clicked.connect(self._view_logs)
         log_layout.addWidget(view_logs_button)
         
@@ -755,6 +779,11 @@ class SettingsPage(QWidget):
             # 立即更新语言
             i18n.set_language(lang_code)
             
+            # 立即更新标题
+            title_label = self.findChild(QLabel, "title_label")
+            if self._is_widget_valid(title_label):
+                title_label.setText(i18n.get_text("settings"))
+            
             # 立即更新所有文本
             self._update_all_texts()
             
@@ -789,11 +818,13 @@ class SettingsPage(QWidget):
                 return
                 
             # 更新背景效果映射
-            self.bg_effects = {
-                "effect_none": i18n.get_text("effect_none"),
-                "effect_gaussian": i18n.get_text("effect_gaussian"),
-                "effect_mica": i18n.get_text("effect_mica"),
-                "effect_blur": i18n.get_text("effect_blur")
+            self.background_effects = {
+                "effect_none": i18n.get_text("effect_none", "无效果"),
+                "effect_mica": i18n.get_text("effect_mica", "云母效果"),
+                "effect_gaussian": i18n.get_text("effect_gaussian", "高斯模糊"),
+                "effect_blur": i18n.get_text("effect_blur", "模糊效果"),
+                "effect_acrylic": i18n.get_text("effect_acrylic", "亚克力效果"),
+                "effect_aero": i18n.get_text("effect_aero", "Aero玻璃效果")
             }
             
             # 更新语言显示映射
@@ -804,17 +835,22 @@ class SettingsPage(QWidget):
                 "origin": i18n.get_text("lang_origin")
             }
             
+            # 立即更新主标题
+            title_label = self.findChild(QLabel, "title_label")
+            if self._is_widget_valid(title_label):
+                title_label.setText(i18n.get_text("settings"))
+            
             # 检查并更新各个组件
             if self._is_widget_valid(self.tab_widget):
+                # 立即更新选项卡标题
+                self.tab_widget.setTabText(0, i18n.get_text("general"))
+                self.tab_widget.setTabText(1, i18n.get_text("appearance"))
+                self.tab_widget.setTabText(2, i18n.get_text("advanced"))
+                
                 # 更新各选项卡文本
                 self._update_general_tab_text()
                 self._update_appearance_tab_text()
                 self._update_advanced_tab_text()
-                
-                # 更新选项卡标题
-                self.tab_widget.setTabText(0, i18n.get_text("general"))
-                self.tab_widget.setTabText(1, i18n.get_text("appearance"))
-                self.tab_widget.setTabText(2, i18n.get_text("advanced"))
             
             # 处理特殊的下拉框更新
             if self._is_widget_valid(self.effect_combo):
@@ -822,7 +858,7 @@ class SettingsPage(QWidget):
                     current_data = self.effect_combo.currentData()
                     self.effect_combo.blockSignals(True)
                     self.effect_combo.clear()
-                    for effect_code, display_name in self.bg_effects.items():
+                    for effect_code, display_name in self.background_effects.items():
                         self.effect_combo.addItem(display_name, effect_code)
                     if current_data:
                         index = self.effect_combo.findData(current_data)
@@ -906,30 +942,14 @@ class SettingsPage(QWidget):
             except Exception as e:
                 log.error(f"更新语言选择框时出错: {str(e)}")
             
-            # 安全地更新所有子部件
-            def safe_update_widget(widget):
-                if not self._is_widget_valid(widget):
-                    return
-                try:
-                    if isinstance(widget, QListView):
-                        if self._is_widget_valid(widget.viewport()):
-                            widget.viewport().update()
-                    elif hasattr(widget, 'update'):
-                        if isinstance(widget.update, type(widget.update)):  # 检查是否是方法
-                            widget.update()
-                except Exception:
-                    pass  # 忽略单个部件更新失败
+            # 强制更新所有选项卡
+            for i in range(self.tab_widget.count()):
+                tab = self.tab_widget.widget(i)
+                if self._is_widget_valid(tab):
+                    tab.update()
             
-            # 递归更新所有子部件
-            def update_widget_tree(widget):
-                if not self._is_widget_valid(widget):
-                    return
-                safe_update_widget(widget)
-                for child in widget.findChildren(QWidget):
-                    update_widget_tree(child)
-            
-            # 从根部件开始更新
-            update_widget_tree(self)
+            # 强制更新整个界面
+            self.update()
             
         except Exception as e:
             log.error(f"更新所有文本时出错: {str(e)}")
@@ -1010,6 +1030,10 @@ class SettingsPage(QWidget):
                         PagesEffect.apply_gaussian_blur(main_window)
                     elif effect_code == 'effect_blur':
                         PagesEffect.apply_blur_effect(main_window)
+                    elif effect_code == 'effect_acrylic':
+                        PagesEffect.apply_acrylic_effect(main_window)
+                    elif effect_code == 'effect_aero':
+                        PagesEffect.apply_aero_effect(main_window)
                         
             except Exception as e:
                 log.error(f"{i18n.get_text('save_config_error')}: {str(e)}")
@@ -1025,7 +1049,6 @@ class SettingsPage(QWidget):
             self.save_path_edit.setText(directory)
     
     def _view_logs(self):
-        """查看日志"""
         log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'logs')
         log_dir = os.path.normpath(log_dir)
         
@@ -1049,56 +1072,71 @@ class SettingsPage(QWidget):
                 )
     
     def _update_general_tab_text(self):
-        """更新常规选项卡的文本"""
-        # 更新语言设置组
-        if isinstance(self.tab_widget.widget(0), QWidget):
-            layout = self.tab_widget.widget(0).layout()
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if isinstance(widget, QGroupBox):
-                    if i == 0:  # 语言设置组
-                        widget.setTitle(i18n.get_text("language_settings"))
-                        # 更新语言设置描述和标签
-                        language_layout = widget.layout()
-                        if language_layout.count() > 0:
-                            # 更新描述文本
-                            desc_label = language_layout.itemAt(0).widget()
-                            if isinstance(desc_label, QLabel):
-                                desc_label.setText(i18n.get_text("language_settings_desc"))
-                            
-                            # 更新语言标签
-                            language_select_layout = language_layout.itemAt(1)
-                            if language_select_layout:
-                                language_label = language_select_layout.itemAt(0).widget()
-                                if isinstance(language_label, QLabel):
-                                    language_label.setText(i18n.get_text("language"))
-                    
-                    elif i == 1:  # 启动设置组
-                        widget.setTitle(i18n.get_text("auto_start"))
-                    
-                    elif i == 2:  # 保存路径组
-                        widget.setTitle(i18n.get_text("save_path"))
-                        # 更新保存路径标签和按钮
-                        save_path_layout = widget.layout()
-                        if save_path_layout:
-                            for j in range(save_path_layout.count()):
-                                item = save_path_layout.itemAt(j)
-                                if isinstance(item.widget(), QLabel):
-                                    item.widget().setText(i18n.get_text("save_path"))
-                                elif isinstance(item.widget(), WhiteButton):
-                                    item.widget().update_title(i18n.get_text("browse"))
-        
-        # 更新开关卡片文本
-        self.startup_switch.update_title(i18n.get_text("auto_start"))
-        self.startup_switch.description_label.setText(i18n.get_text("auto_start_desc"))
-        self.startup_switch.switch_label.setText(i18n.get_text("auto_start"))
-        
-        self.auto_save_switch.update_title(i18n.get_text("auto_save"))
-        self.auto_save_switch.description_label.setText(i18n.get_text("auto_save_desc"))
-        self.auto_save_switch.switch_label.setText(i18n.get_text("auto_save"))
+        try:
+            # 检查 tab_widget 是否有效
+            if not self._is_widget_valid(self.tab_widget):
+                return
+                
+            # 检查常规选项卡是否有效
+            general_tab = self.tab_widget.widget(0)
+            if not self._is_widget_valid(general_tab):
+                return
+            
+            # 直接通过objectName查找并更新标签
+            # 更新语言设置组
+            language_group = general_tab.findChild(QGroupBox, "language_group")
+            if self._is_widget_valid(language_group):
+                language_group.setTitle(i18n.get_text("language_settings"))
+            
+            # 更新语言设置描述
+            language_desc = general_tab.findChild(QLabel, "language_desc")
+            if self._is_widget_valid(language_desc):
+                language_desc.setText(i18n.get_text("language_settings_desc"))
+            
+            # 更新语言标签
+            language_label = general_tab.findChild(QLabel, "language_label")
+            if self._is_widget_valid(language_label):
+                language_label.setText(i18n.get_text("language"))
+            
+            # 更新启动设置组
+            startup_group = general_tab.findChild(QGroupBox, "startup_group")
+            if self._is_widget_valid(startup_group):
+                startup_group.setTitle(i18n.get_text("auto_start"))
+            
+            # 更新保存路径组
+            save_path_group = general_tab.findChild(QGroupBox, "save_path_group")
+            if self._is_widget_valid(save_path_group):
+                save_path_group.setTitle(i18n.get_text("save_path"))
+            
+            # 更新保存路径标签
+            save_path_label = general_tab.findChild(QLabel, "save_path_label")
+            if self._is_widget_valid(save_path_label):
+                save_path_label.setText(i18n.get_text("save_path"))
+            
+            # 更新浏览按钮
+            browse_button = general_tab.findChild(WhiteButton, "browse_button")
+            if self._is_widget_valid(browse_button):
+                browse_button.update_title(i18n.get_text("browse"))
+            
+            # 更新开关卡片文本
+            if self._is_widget_valid(self.startup_switch):
+                self.startup_switch.update_title(i18n.get_text("auto_start"))
+                self.startup_switch.description_label.setText(i18n.get_text("auto_start_desc"))
+                self.startup_switch.switch_label.setText(i18n.get_text("auto_start"))
+            
+            if self._is_widget_valid(self.auto_save_switch):
+                self.auto_save_switch.update_title(i18n.get_text("auto_save"))
+                self.auto_save_switch.description_label.setText(i18n.get_text("auto_save_desc"))
+                self.auto_save_switch.switch_label.setText(i18n.get_text("auto_save"))
+            
+            # 强制更新界面
+            if self._is_widget_valid(general_tab):
+                general_tab.update()
+                
+        except Exception as e:
+            log.error(f"更新常规选项卡文本时出错: {str(e)}")
     
     def _update_appearance_tab_text(self):
-        """更新外观选项卡的文本"""
         try:
             # 检查 tab_widget 是否有效
             if not self._is_widget_valid(self.tab_widget):
@@ -1108,78 +1146,67 @@ class SettingsPage(QWidget):
             appearance_tab = self.tab_widget.widget(1)
             if not self._is_widget_valid(appearance_tab):
                 return
-                
-            layout = appearance_tab.layout()
-            if not layout:
-                return
-                
+            
             # 更新背景效果映射
-            self.bg_effects = {
-                "effect_none": i18n.get_text("effect_none"),
-                "effect_gaussian": i18n.get_text("effect_gaussian"),
-                "effect_mica": i18n.get_text("effect_mica"),
-                "effect_blur": i18n.get_text("effect_blur")
+            self.background_effects = {
+                "effect_none": i18n.get_text("effect_none", "无效果"),
+                "effect_mica": i18n.get_text("effect_mica", "云母效果"),
+                "effect_gaussian": i18n.get_text("effect_gaussian", "高斯模糊"),
+                "effect_blur": i18n.get_text("effect_blur", "模糊效果"),
+                "effect_acrylic": i18n.get_text("effect_acrylic", "亚克力效果"),
+                "effect_aero": i18n.get_text("effect_aero", "Aero玻璃效果")
             }
+            
+            # 直接通过objectName查找并更新标签
+            # 更新效果设置组
+            effect_group = appearance_tab.findChild(QGroupBox, "effect_group")
+            if self._is_widget_valid(effect_group):
+                effect_group.setTitle(i18n.get_text("effect_settings"))
                 
-            # 遍历所有组件并更新文本
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if not isinstance(widget, QGroupBox):
-                    continue
+            # 更新效果描述
+            effect_desc = appearance_tab.findChild(QLabel, "effect_desc")
+            if self._is_widget_valid(effect_desc):
+                effect_desc.setText(i18n.get_text("effect_settings_desc"))
+                
+            # 更新效果类型标签
+            effect_label = appearance_tab.findChild(QLabel, "effect_label")
+            if self._is_widget_valid(effect_label):
+                effect_label.setText(i18n.get_text("effect_type"))
+                
+            # 更新字体设置组
+            font_group = appearance_tab.findChild(QGroupBox, "font_group")
+            if self._is_widget_valid(font_group):
+                font_group.setTitle(i18n.get_text("font_settings"))
+                
+            # 更新字体描述
+            font_desc = appearance_tab.findChild(QLabel, "font_desc")
+            if self._is_widget_valid(font_desc):
+                font_desc.setText(i18n.get_text("font_settings_desc"))
+                
+            # 更新字体大小标签
+            font_size_label = appearance_tab.findChild(QLabel, "font_size_label")
+            if self._is_widget_valid(font_size_label):
+                font_size_label.setText(i18n.get_text("font_size"))
+            
+            # 直接更新效果下拉框
+            if self._is_widget_valid(self.effect_combo):
+                try:
+                    current_data = self.effect_combo.currentData()
+                    self.effect_combo.blockSignals(True)
+                    self.effect_combo.clear()
                     
-                # 更新组标题
-                if "effect" in widget.title().lower():
-                    widget.setTitle(i18n.get_text("effect_settings"))
-                    effect_layout = widget.layout()
-                    if effect_layout and effect_layout.count() > 0:
-                        # 更新描述文本
-                        desc_label = effect_layout.itemAt(0).widget()
-                        if isinstance(desc_label, QLabel):
-                            desc_label.setText(i18n.get_text("effect_settings_desc"))
-                        
-                        # 更新效果类型标签和下拉框
-                        if effect_layout.count() > 1:
-                            effect_select_layout = effect_layout.itemAt(1)
-                            if effect_select_layout and effect_select_layout.count() > 0:
-                                effect_label = effect_select_layout.itemAt(0).widget()
-                                if isinstance(effect_label, QLabel):
-                                    effect_label.setText(i18n.get_text("effect_type"))
-                                
-                                # 更新下拉框选项
-                                if self._is_widget_valid(self.effect_combo):
-                                    try:
-                                        current_data = self.effect_combo.currentData()
-                                        self.effect_combo.blockSignals(True)
-                                        self.effect_combo.clear()
-                                        
-                                        # 添加效果选项
-                                        for effect_code, display_name in self.bg_effects.items():
-                                            self.effect_combo.addItem(display_name, effect_code)
-                                        
-                                        # 恢复之前选择的效果
-                                        if current_data:
-                                            index = self.effect_combo.findData(current_data)
-                                            if index >= 0:
-                                                self.effect_combo.setCurrentIndex(index)
-                                    finally:
-                                        self.effect_combo.blockSignals(False)
-                
-                elif "font" in widget.title().lower():
-                    widget.setTitle(i18n.get_text("font_settings"))
-                    font_layout = widget.layout()
-                    if font_layout and font_layout.count() > 0:
-                        # 更新描述文本
-                        desc_label = font_layout.itemAt(0).widget()
-                        if isinstance(desc_label, QLabel):
-                            desc_label.setText(i18n.get_text("font_settings_desc"))
-                        
-                        # 更新字体大小标签
-                        if font_layout.count() > 1:
-                            font_size_layout = font_layout.itemAt(1)
-                            if font_size_layout and font_size_layout.count() > 0:
-                                font_size_label = font_size_layout.itemAt(0).widget()
-                                if isinstance(font_size_label, QLabel):
-                                    font_size_label.setText(i18n.get_text("font_size"))
+                    # 添加效果选项
+                    for effect_code, display_name in self.background_effects.items():
+                        self.effect_combo.addItem(display_name, effect_code)
+                    
+                    # 恢复之前选择的效果
+                    if current_data:
+                        index = self.effect_combo.findData(current_data)
+                        if index >= 0:
+                            self.effect_combo.setCurrentIndex(index)
+                finally:
+                    if self._is_widget_valid(self.effect_combo):
+                        self.effect_combo.blockSignals(False)
             
             # 强制更新界面
             if self._is_widget_valid(appearance_tab):
@@ -1189,7 +1216,6 @@ class SettingsPage(QWidget):
             log.error(f"更新外观选项卡文本时出错: {str(e)}")
     
     def _update_advanced_tab_text(self):
-        """更新高级选项卡的文本"""
         try:
             # 检查 tab_widget 是否有效
             if not self._is_widget_valid(self.tab_widget):
@@ -1199,44 +1225,53 @@ class SettingsPage(QWidget):
             advanced_tab = self.tab_widget.widget(2)
             if not self._is_widget_valid(advanced_tab):
                 return
+            
+            # 直接通过objectName查找并更新标签
+            # 更新日志设置组
+            log_group = advanced_tab.findChild(QGroupBox, "log_group")
+            if self._is_widget_valid(log_group):
+                log_group.setTitle(i18n.get_text("log_settings"))
+            
+            # 更新日志级别标签
+            log_level_label = advanced_tab.findChild(QLabel, "log_level_label")
+            if self._is_widget_valid(log_level_label):
+                log_level_label.setText(i18n.get_text("log_level"))
+            
+            # 更新查看日志按钮
+            view_logs_button = advanced_tab.findChild(WhiteButton, "view_logs_button")
+            if self._is_widget_valid(view_logs_button):
+                view_logs_button.update_title(i18n.get_text("view_logs"))
                 
             # 检查combo box是否还存在且有效
             if self._is_widget_valid(self.log_level_combo):
                 try:
-                    # 更新日志设置
+                    # 更新日志级别下拉框
                     self.log_level_combo.blockSignals(True)
+                    
+                    # 保存当前选择的日志级别
+                    current_level = self.log_level_combo.currentData()
+                    
+                    # 更新所有日志级别选项文本
                     for i in range(self.log_level_combo.count()):
                         level_code = self.log_level_combo.itemData(i)
                         if level_code:
                             display_name = i18n.get_text(f"log_level_{level_code}")
                             self.log_level_combo.setItemText(i, display_name)
                 finally:
-                    self.log_level_combo.blockSignals(False)
+                    if self._is_widget_valid(self.log_level_combo):
+                        self.log_level_combo.blockSignals(False)
             
-            # 更新查看日志按钮文本
-            layout = advanced_tab.layout()
-            if layout:
-                for i in range(layout.count()):
-                    widget = layout.itemAt(i).widget()
-                    if isinstance(widget, QGroupBox):
-                        if "log" in widget.title().lower():
-                            widget.setTitle(i18n.get_text("log_settings"))
-                            # 更新查看日志按钮文本
-                            group_layout = widget.layout()
-                            if group_layout:
-                                for j in range(group_layout.count()):
-                                    button = group_layout.itemAt(j).widget()
-                                    if isinstance(button, QPushButton):
-                                        button.setText(i18n.get_text("view_logs"))
+            # 强制更新界面
+            if self._is_widget_valid(advanced_tab):
+                advanced_tab.update()
+                
         except Exception as e:
             log.error(f"更新高级选项卡文本时出错: {str(e)}")
     
     def sizeHint(self):
-        """建议的尺寸"""
         return QSize(600, 500)
 
     def _is_widget_valid(self, widget):
-        """检查Qt部件是否有效"""
         try:
             if widget is None:
                 return False
