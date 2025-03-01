@@ -100,7 +100,14 @@
     "yes": "yes",
     "no": "no",
     "restart_now": "restart_now",
+    "restart_cancel": "restart_cancel",
     "restart_later": "restart_later",
+    "general": "general",
+    "appearance": "appearance",
+    "advanced": "advanced",
+    "reset": "reset",   
+    "browse": "browse",
+    "save_path": "save_path", 
     "personalization": "personalization",
     "system": "system",
     "about_settings": "about_settings",
@@ -147,5 +154,7 @@
     "effect_none": "effect_none",
     "effect_blur": "effect_blur",
     "effect_mica": "effect_mica",
-    "effect_gaussian": "effect_gaussian"
+    "effect_gaussian": "effect_gaussian",
+    "effect_acrylic": "effect_acrylic",
+    "effect_aero": "effect_aero"
 } 

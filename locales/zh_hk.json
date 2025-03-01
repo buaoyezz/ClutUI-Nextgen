@@ -141,6 +141,12 @@
     "expandable": "可展開卡片",
     "expandable_notice": "這是一個可展開卡片的示例頁面，展示了卡片的展開/收起功能。",
     "hitokoto": "一言",
+    "general": "常規",
+    "appearance": "外觀",
+    "advanced": "高級",
+    "reset": "重置",
+    "browse": "瀏覽",
+    "save_path": "保存路徑",
     "background_effect": "背景",
     "background_effect_desc": "控制界面背景效果",
     "effect_settings": "效果設置",
@@ -160,5 +166,11 @@
     "log_dir_not_found": "日誌目錄不存在",
     "settings_reset": "設置已重置",
     "save_config_error": "保存配置失敗",
-    "load_config_error": "加載配置失敗"
+    "load_config_error": "加載配置失敗",
+    "effect_none": "無效果",
+    "effect_gaussian": "高斯模糊",
+    "effect_mica": "雲母效果",
+    "effect_blur": "模糊效果",
+    "effect_acrylic": "亞克力效果",
+    "effect_aero": "Aero玻璃效果"
 }

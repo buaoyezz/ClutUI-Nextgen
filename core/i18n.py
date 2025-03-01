@@ -2,72 +2,67 @@ import json
 import os
 from typing import Dict, List, Optional, Callable
 from PySide6.QtCore import QObject, Signal, QEvent, QCoreApplication
+from core.log.log_manager import log
 
 class I18nManager(QObject):
-    language_changed = Signal(str)  # 语言变更信号
-    
-    _instance = None
-    _current_language = 'zh'
-    _fallback_language = 'en'
-    _translations: Dict[str, Dict[str, str]] = {}
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(I18nManager, cls).__new__(cls)
-            cls._instance._load_translations()
-        return cls._instance
+    language_changed = Signal()
     
     def __init__(self):
-        if not hasattr(self, '_initialized'):
-            super().__init__()
-            self._initialized = True
-    
-    def _load_translations(self):
-        locales_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'locales')
-        for file in os.listdir(locales_dir):
-            if file.endswith('.json'):
-                lang = file.split('.')[0]
-                with open(os.path.join(locales_dir, file), 'r', encoding='utf-8') as f:
-                    self._translations[lang] = json.load(f)
-    
-    @property
-    def current_language(self) -> str:
-        return self._current_language
-    
-    @property
-    def available_languages(self) -> List[str]:
-        return list(self._translations.keys())
-    
-    def set_language(self, lang: str):
-        if lang not in self._translations:
-            return
-            
-        if self._current_language != lang:
-            # 清理所有通知
-            from core.utils.notif import Notification
-            Notification.clear_all_notifications()
-            
-            self._current_language = lang
-            # 发送Qt语言变更事件
-            event = QEvent(QEvent.LanguageChange)
-            QCoreApplication.sendEvent(QCoreApplication.instance(), event)
-            # 发送自定义信号
-            self.language_changed.emit(lang)
-    
-    def get_text(self, key: str, *args, **kwargs) -> str:
+        super().__init__()
+        self.current_language = "en"
+        self.translations = {}
+        self.base_translations = {}
+        self.load_base_translations()
+        
+    def load_base_translations(self):
         try:
-            text = self._translations[self._current_language][key]
-        except KeyError:
-            try:
-                text = self._translations[self._fallback_language][key]
-            except KeyError:
-                return key
-                
-        if args or kwargs:
-            try:
-                return text.format(*args, **kwargs)
-            except (IndexError, KeyError):
-                return text
-        return text
+            base_path = os.path.join("locales", "base.json")
+            if os.path.exists(base_path):
+                with open(base_path, 'r', encoding='utf-8') as f:
+                    self.base_translations = json.load(f)
+                log.info(f"已加载基础翻译文件")
+            else:
+                log.warning(f"基础翻译文件不存在: {base_path}")
+        except Exception as e:
+            log.error(f"加载基础翻译文件失败: {str(e)}")
+    
+    def set_language(self, language):
+        return self.load_language(language)
+            
+    def load_language(self, language):
+        try:
+            lang_path = os.path.join("locales", f"{language}.json")
+            if os.path.exists(lang_path):
+                with open(lang_path, 'r', encoding='utf-8') as f:
+                    lang_translations = json.load(f)
+                    
+                # 合并基础翻译和语言特定翻译
+                self.translations = {**self.base_translations, **lang_translations}
+                self.current_language = language
+                self.language_changed.emit()
+                log.info(f"已加载语言: {language}")
+                return True
+            else:
+                log.warning(f"语言文件不存在: {lang_path}")
+                return False
+        except Exception as e:
+            log.error(f"加载语言失败: {str(e)}")
+            return False
+            
+    def get_text(self, key, default=None):
+        # 处理嵌套键，如 "urls.changelog"
+        if "." in key:
+            parts = key.split(".")
+            value = self.translations
+            for part in parts:
+                if isinstance(value, dict) and part in value:
+                    value = value[part]
+                else:
+                    return default or key
+            return value
+            
+        # 普通键
+        return self.translations.get(key, default or key)
 
+# 创建全局实例
 i18n = I18nManager() 
