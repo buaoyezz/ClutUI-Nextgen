@@ -43,17 +43,16 @@ pyinstaller --noconfirm --onefile --windowed --icon="resources/logo.png" ^
 --add-data="resources;resources" ^
 --add-data="FontLicense;FontLicense" ^
 --add-data="tools;tools" ^
---add-data="config.json;." ^
 --add-data="LICENSE;." ^
 --name="ClutUI_Nextgen" ^
 ClutUI_Nextgen_Main.py
 
 if %errorlevel% neq 0 (
-    echo 打包过程中出现错误，请检查日志。
-    echo 尽管出现错误，程序将继续执行...
+    echo "打包过程中出现错误，请检查日志。"
+    echo "尽管出现错误，程序将继续执行..."
 ) else (
-    echo 打包完成！
-    echo 可执行文件位于 dist/ClutUI_Nextgen.exe
+    echo "打包完成！"
+    echo "可执行文件位于 dist/ClutUI_Nextgen.exe"
 )
 
 echo ===== 打包过程结束 =====
