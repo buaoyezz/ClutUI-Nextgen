@@ -18,6 +18,8 @@ import sys
 import os
 import json
 import ctypes
+import win32gui
+import win32con
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -109,6 +111,9 @@ class MainWindow(QMainWindow):
             }
         """)
         
+        # 设置窗口属性以支持圆角
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
         self.setCentralWidget(main_widget)
         
         # 初始化关闭相关属性
@@ -163,8 +168,16 @@ class MainWindow(QMainWindow):
                     PagesEffect.apply_gaussian_blur(self)
                 elif effect == 'effect_blur':
                     PagesEffect.apply_blur_effect(self)
-        except:
+                elif effect == 'effect_acrylic':
+                    PagesEffect.apply_acrylic_effect(self)
+                elif effect == 'effect_aero':
+                    PagesEffect.apply_aero_effect(self)
+                else:
+                    # 未知效果，使用默认模糊效果
+                    PagesEffect.apply_blur_effect(self)
+        except Exception as e:
             # 如果配置读取失败，默认使用无效果
+            log.error(f"应用背景效果时出错: {str(e)}")
             PagesEffect.remove_effects(self)
         
         # 显示主窗口部件
